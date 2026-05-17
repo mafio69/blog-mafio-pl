@@ -1,80 +1,108 @@
 ---
 inclusion: always
 ---
-#To projekt który będzie elementem server-a
-# Kontekst projektu — docker-fast-php-logger
+
+# Kontekst projektu — blog.mafio.pl
 
 ## Co to jest
 
-Środowisko deweloperskie Docker dla PHP 8.3 + Apache + MySQL 8.
-Bundluje dwa pakiety Composer:
-- `mafio69/fast-php-logger` — PSR-3 logger z rotacją plików i anonimizacją
-- `mafio69/fast-php-log-viewer` — UI do przeglądania logów
+Auto-agregujący blog techniczny. Zbiera artykuły z PHP/Docker/dev świata, generuje streszczenia AI, serwuje publicznie.
+
+## Status: Faza 1 MVP ✅
+
+### Co zrobione (2026-05-17)
+
+- [x] Symfony 8.0 skeleton (PHP 8.4)
+- [x] VPS OVH deploy (nginx + PHP 8.4-FPM + SSL Let's Encrypt)
+- [x] Domena blog.mafio.pl → DNS + certyfikat
+- [x] Admin panel z loginem (form_login, in-memory user)
+- [x] SupabaseClient service (REST API wrapper)
+- [x] ProjectStateService (stan projektu w Supabase)
+- [x] Strona /admin/project-state (read-only widok stanu)
+- [x] Tabela `project_state` w Supabase (security, infra, plany, prompty)
+- [x] PHPUnit testy (9 testów, 28 asercji)
+- [x] Git security (brak sekretów w repo)
+- [x] README.md po angielsku
+- [x] UI przetłumaczone na angielski
+
+### Co dalej (kolejność priorytetów)
+
+1. **CRUD artykułów** — admin: dodawanie/edycja/usuwanie postów (tabela `posts` w Supabase)
+2. **Publiczna lista postów** — strona główna z artykułami
+3. **Gemini Pro integration** — streszczenia artykułów z URL
+4. **RSS agregator** — auto-fetch z feedów (cron 2x/dzień)
+5. **Ładna aranżacja** — CSS/design, responsywność, typografia
+6. **MCP Server** — endpoint dla AI agentów (faza 4)
+
+## Stack
+
+| Warstwa | Technologia |
+|---------|-------------|
+| Backend | PHP 8.4, Symfony 8.0 |
+| Baza | Supabase (PostgreSQL 17, eu-central-1) |
+| Frontend | Twig SSR, minimalistyczny CSS |
+| Auth | Session-based, 1 admin user (in-memory) |
+| Deploy | VPS OVH, nginx + PHP 8.4-FPM, Let's Encrypt |
+| AI | Gemini Pro (planowane) |
 
 ## Struktura katalogów
 
 ```
-./app/              ← kod PHP aplikacji (volume: ./app → /var/www/html/app)
-./app/suite-nav.js  ← nawigacja dropdown (serwowana globalnie przez proxy)
-./logs/             ← pliki logów na hoście (volume: ./logs → /var/www/html/logs)
-./viewer/           ← entry point przeglądarki logów (kopiowany do obrazu)
-./docker/           ← php.ini, xdebug.ini, entrypoint.sh, nginx-inject.conf
-./packages/         ← lokalny pakiet fast-php-logger (źródło)
-./vendor/           ← Composer deps (budowane wewnątrz obrazu, NIE montowane)
+src/
+├── Controller/           # Cienkie kontrolery (routing only)
+│   ├── AdminController.php
+│   ├── HomeController.php
+│   └── SecurityController.php
+├── Service/              # Logika biznesowa
+│   ├── SupabaseClient.php
+│   └── ProjectStateService.php
+└── Kernel.php
+
+templates/                # Twig templates
+config/                   # Symfony config
+tests/                    # PHPUnit testy
+docs/                     # Dokumentacja (po polsku)
+public/                   # Web root
 ```
-
-## Serwisy Docker i routing
-
-| Domena | Serwis | Opis |
-|---|---|---|
-| `http://app.local` | php (Apache) | Dashboard aplikacji |
-| `http://logs.local` | php (Apache VirtualHost) | Log viewer |
-| `http://pma.local` | phpmyadmin | phpMyAdmin |
-| `http://adminer.local` | adminer | Adminer |
-| `http://mail.local` | mailpit | Przechwytywanie maili |
-| `http://portainer.local` | portainer | Zarządzanie kontenerami |
-
-Fallback (bez proxy): `http://localhost:8080`
-
-## Nawigacja suite (dropdown ☰)
-
-Plik `app/suite-nav.js` jest wstrzykiwany na **wszystkie** serwisy przez nginx-proxy:
-- `docker/nginx-inject.conf` — `sub_filter` dodaje `<script src>` przed `</title>`
-- Montowany jako `/etc/nginx/vhost.d/default_location` w serwisie proxy
-- Używa `window.location.href` (nie `<a>`) żeby ominąć AJAX interception PMA/Portainer
-
-## Namespace PHP
-
-Pakiet logger: `Mariusz\Logger\` (src w `packages/fast-php-logger/src/`)
-
-## Kluczowe klasy
-
-| Klasa | Plik | Rola |
-|---|---|---|
-| `DualLogger` | `packages/fast-php-logger/src/DualLogger.php` | PSR-3 logger, pisze do pliku i STDERR |
-| `LogFileManager` | `packages/fast-php-logger/src/LogFileManager.php` | Rotacja plików, struktura `YYYY/MM/YYYY-MM-DD.log` |
-| `LogAnonymizer` | `packages/fast-php-logger/src/LogAnonymizer.php` | Maskuje email, token, password w kontekście |
-| `LogContextSerializer` | `packages/fast-php-logger/src/LogContextSerializer.php` | Serializuje obiekty/wyjątki do tablicy |
-
-## Format wpisu logu
-
-```
-[2026-05-04 14:32:01] [WARNING] [app/index.php:28] Login failed {"email":"j*n@***.com","attempts":3}
-```
-
-## Zmienne środowiskowe
-
-- `APP_ENV` — środowisko (development/test/production)
-- `LOG_DIR` — katalog logów w kontenerze (`/var/www/html/logs`)
-- `DB_HOST`, `DB_PORT`, `DB_DATABASE`, `DB_USERNAME`, `DB_PASSWORD` — MySQL
-- `GIT_ACCES_TOKEN` — token GitHub (w `.env`, NIE commitować)
-- `DUCK_TOKEN` — token MotherDuck (w `.env`, NIE commitować)
 
 ## Konwencje
 
-- Kod, komentarze, commity i PR-y po **angielsku**
-- `vendor/` wykluczony z gita (budowany w obrazie Docker)
-- Zmiany w `composer.json` → wymagają `docker compose build`
-- Zmiany w `viewer/` lub `Dockerfile` → wymagają `docker compose up -d --build php`
-- PHP 8.1+ (strict_types, named arguments, enums, fibers OK)
+- Kod, komentarze, commity, README — po **angielsku**
+- Dokumentacja w `docs/` — po **polsku**
+- Cienkie kontrolery, logika w serwisach
 - PSR-12 coding style
+- `vendor/` w .gitignore
+- Sekrety TYLKO w `.env.local` (gitignored)
+- Deploy: scp + `php8.4 bin/console cache:clear --env=prod`
+
+## Infrastruktura
+
+| Zasób | Wartość |
+|-------|---------|
+| VPS | OVH vps-6f882619, Ubuntu 24.04 |
+| IP | 57.128.241.168 |
+| Domeny | blog.mafio.pl, lab.mafio.pl, mafio.pl |
+| PHP | 8.4.21 (cli + fpm) |
+| Nginx | reverse proxy, SSL termination |
+| Supabase | ref: pqunceuggtrqrerybult |
+| Git | github.com/mafio69/blog-mafio-pl |
+
+## Zmienne środowiskowe (.env.local)
+
+- `SUPABASE_URL` — URL projektu Supabase
+- `SUPABASE_ANON_KEY` — klucz publiczny (RLS)
+- `SUPABASE_SERVICE_ROLE_KEY` — klucz admin (pomija RLS)
+- `APP_ENV` — prod na serwerze
+- `APP_SECRET` — secret Symfony
+
+## Baza danych (Supabase)
+
+### Istniejące tabele
+
+- `project_state` — stan projektu (sekcje: security, infrastructure, progress, plans, prompts)
+
+### Planowane tabele
+
+- `posts` — artykuły (title, slug, content, summary, tags, status, source_urls)
+- `feeds` — źródła RSS
+- `admins` — użytkownicy admin (docelowo zamiast in-memory)
