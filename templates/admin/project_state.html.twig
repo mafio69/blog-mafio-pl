@@ -1,0 +1,34 @@
+{% extends 'base.html.twig' %}
+
+{% block title %}Project State — Admin{% endblock %}
+
+{% block body %}
+    <h1>Project State</h1>
+    <p><a href="{{ path('admin_dashboard') }}">← Dashboard</a> | <a href="{{ path('logout') }}">Wyloguj</a></p>
+
+    {% for section, rows in sections %}
+        <h2>{{ section|capitalize }}</h2>
+        <table style="width:100%; border-collapse:collapse; margin-bottom:2rem;">
+            <tr style="background:#f0f0f0;">
+                <th style="text-align:left; padding:0.5rem; border:1px solid #ddd;">Key</th>
+                <th style="text-align:left; padding:0.5rem; border:1px solid #ddd;">Value</th>
+                <th style="text-align:left; padding:0.5rem; border:1px solid #ddd;">Updated</th>
+            </tr>
+            {% for row in rows %}
+                <tr>
+                    <td style="padding:0.5rem; border:1px solid #ddd; font-weight:bold;">{{ row.key }}</td>
+                    <td style="padding:0.5rem; border:1px solid #ddd; font-family:monospace; font-size:0.85rem;">
+                        {% if row.encrypted %}
+                            <span style="color:#999;">🔒 [encrypted]</span>
+                        {% else %}
+                            {{ row.value }}
+                        {% endif %}
+                    </td>
+                    <td style="padding:0.5rem; border:1px solid #ddd; font-size:0.8rem; color:#666;">
+                        {{ row.updated_at|date('Y-m-d H:i') }}
+                    </td>
+                </tr>
+            {% endfor %}
+        </table>
+    {% endfor %}
+{% endblock %}
