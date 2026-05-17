@@ -4,7 +4,7 @@
 
 {% block body %}
     <h1>Project State</h1>
-    <p><a href="{{ path('admin_dashboard') }}">← Dashboard</a> | <a href="{{ path('logout') }}">Wyloguj</a></p>
+    <p><a href="{{ path('admin_dashboard') }}">← Dashboard</a> | <a href="{{ path('logout') }}">Logout</a></p>
 
     {% for section, rows in sections %}
         <h2>{{ section|capitalize }}</h2>

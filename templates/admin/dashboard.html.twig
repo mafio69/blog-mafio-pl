@@ -4,9 +4,9 @@
 
 {% block body %}
     <h1>Admin Dashboard</h1>
-    <p>Zalogowany jako: {{ app.user.userIdentifier }}</p>
+    <p>Logged in as: {{ app.user.userIdentifier }}</p>
     <nav>
         <a href="{{ path('admin_project_state') }}">📋 Project State</a> |
-        <a href="{{ path('logout') }}">Wyloguj</a>
+        <a href="{{ path('logout') }}">Logout</a>
     </nav>
 {% endblock %}
