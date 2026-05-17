@@ -112,9 +112,38 @@ CREATE TABLE admins (
 
 ---
 
+## MCP Server
+
+Blog eksponuje MCP (Model Context Protocol) endpoint dla AI agentów.
+
+### Architektura
+
+- Pakiet: `php-mcp/server` (ReactPHP-based, long-running process)
+- Transport: **Streamable HTTP** (port 8081, za nginx proxy)
+- Proces zarządzany przez Supervisor
+- Endpoint: `mcp.mafio.pl` lub `blog.mafio.pl/mcp`
+
+### Toole MCP
+
+| Tool | Opis |
+|---|---|
+| `create_post` | Tworzenie artykułu (tytuł, treść, tagi) |
+| `list_posts` | Lista artykułów (filtry: status, tag, data) |
+| `fetch_rss` | Ręczne triggerowanie pobrania feedów |
+| `summarize_article` | Streszczenie URL przez Gemini API |
+
+### Dlaczego PHP nie ma problemu z timeoutami
+
+- `php-mcp/server` działa jako **persistent process** (ReactPHP event loop)
+- Nie jest to tradycyjny request-response PHP (nie ma max_execution_time)
+- Supervisor restartuje proces jeśli padnie
+
+---
+
 ## Fazy implementacji
 
 1. **MVP** — publiczna strona + admin (ręczne dodawanie)
 2. **Auto-fetch** — RSS agregator + cron
-3. **AI streszczenia** — OpenAI integration
-4. **Polish** — RSS feed, SEO meta, cache
+3. **AI streszczenia** — Gemini Pro integration
+4. **MCP Server** — endpoint dla AI agentów
+5. **Polish** — RSS feed, SEO meta, cache

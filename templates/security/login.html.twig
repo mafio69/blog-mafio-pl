@@ -1,0 +1,24 @@
+{% extends 'base.html.twig' %}
+
+{% block title %}Login — blog.mafio.pl{% endblock %}
+
+{% block body %}
+    <h1>Login</h1>
+
+    {% if error %}
+        <p style="color: red;">{{ error.messageKey|trans(error.messageData, 'security') }}</p>
+    {% endif %}
+
+    <form method="post">
+        <div>
+            <label for="_username">Username:</label>
+            <input type="text" id="_username" name="_username" value="{{ last_username }}" required autofocus>
+        </div>
+        <div>
+            <label for="_password">Password:</label>
+            <input type="password" id="_password" name="_password" required>
+        </div>
+        <input type="hidden" name="_csrf_token" value="{{ csrf_token('authenticate') }}">
+        <button type="submit">Zaloguj</button>
+    </form>
+{% endblock %}

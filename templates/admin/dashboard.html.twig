@@ -1,0 +1,9 @@
+{% extends 'base.html.twig' %}
+
+{% block title %}Admin — blog.mafio.pl{% endblock %}
+
+{% block body %}
+    <h1>Admin Dashboard</h1>
+    <p>Zalogowany jako: {{ app.user.userIdentifier }}</p>
+    <a href="{{ path('logout') }}">Wyloguj</a>
+{% endblock %}
