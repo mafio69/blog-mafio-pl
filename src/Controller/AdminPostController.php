@@ -5,6 +5,7 @@ declare(strict_types=1);
 namespace App\Controller;
 
 use App\Service\PostService;
+use App\Service\SummarizerService;
 use Symfony\Bundle\FrameworkBundle\Controller\AbstractController;
 use Symfony\Component\HttpFoundation\Request;
 use Symfony\Component\HttpFoundation\Response;
@@ -101,6 +102,29 @@ class AdminPostController extends AbstractController
         }
 
         $postService->delete($id);
+
+        return $this->redirectToRoute('admin_post_index');
+    }
+
+    #[Route('/{id}/regenerate-title', name: 'admin_post_regenerate_title', methods: ['POST'])]
+    public function regenerateTitle(string $id, Request $request, PostService $postService, SummarizerService $summarizer): Response
+    {
+        if (!$this->isCsrfTokenValid('regen' . $id, $request->request->get('_token'))) {
+            throw $this->createAccessDeniedException('Invalid CSRF token.');
+        }
+
+        $post = $postService->findOneById($id);
+        if (!$post) {
+            throw $this->createNotFoundException('Post not found.');
+        }
+
+        try {
+            $title = $summarizer->generateTitle($post['content']);
+            $postService->update($id, ['title' => $title]);
+            $this->addFlash('success', 'Tytuł wygenerowany: ' . $title);
+        } catch (\Exception $e) {
+            $this->addFlash('error', 'Błąd: ' . $e->getMessage());
+        }
 
         return $this->redirectToRoute('admin_post_index');
     }

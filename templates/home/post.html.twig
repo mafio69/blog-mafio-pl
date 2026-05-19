@@ -4,36 +4,44 @@
 
 {% block body %}
     <article>
-        <div class="post-meta" style="margin-bottom: 1rem;">
-            {{ post.published_at|date('d M Y') }}
-            {% if post.auto_generated %}
-                &bull; 🤖 AI Generated
-            {% endif %}
+        <div style="margin-bottom: 2rem;">
+            <div style="font-size: 0.7rem; color: var(--fg-muted); margin-bottom: 1rem;">
+                {{ post.published_at|date('d.m.Y') }}{% if post.auto_generated %} · 🤖 AI{% endif %}
+            </div>
+            <h1 style="font-size: 1.6rem; font-weight: 800; line-height: 1.3; margin-bottom: 1rem;">{{ post.title }}</h1>
+            <div class="tags">
+                {% for tag in post.tags|default([]) %}
+                    <span class="tag">{{ tag }}</span>
+                {% endfor %}
+            </div>
         </div>
 
-        <h1 style="font-size: 2rem; font-weight: 800; line-height: 1.2; margin-bottom: 1.5rem;">{{ post.title }}</h1>
-
-        <div class="tags" style="margin-bottom: 2rem;">
-            {% for tag in post.tags|default([]) %}
-                <span class="tag">{{ tag }}</span>
-            {% endfor %}
-        </div>
-
-        <div style="font-size: 1.05rem; line-height: 1.8; color: var(--fg);">
+        <div class="article-content">
             {{ post.content|nl2br }}
         </div>
 
         {% if post.source_urls is defined and post.source_urls|length > 0 %}
-            <div style="margin-top: 2.5rem; padding-top: 1.5rem; border-top: 1px solid var(--border); font-size: 0.85rem; color: var(--muted);">
-                <strong>Source:</strong>
+            <div style="margin-top: 3rem; padding-top: 1.5rem; border-top: 1px solid var(--border); font-size: 0.75rem; color: var(--fg-muted);">
+                źródło:
                 {% for url in post.source_urls %}
-                    <a href="{{ url }}" target="_blank" rel="noopener" style="color: var(--accent);">{{ url|length > 60 ? url[:60] ~ '…' : url }}</a>{{ not loop.last ? ', ' : '' }}
+                    <a href="{{ url }}" target="_blank" rel="noopener" style="color: var(--fg-dim);">{{ url|length > 50 ? url[:50] ~ '…' : url }}</a>{{ not loop.last ? ' · ' : '' }}
                 {% endfor %}
             </div>
         {% endif %}
     </article>
 
-    <div style="margin-top: 3rem; padding-top: 1.5rem; border-top: 1px solid var(--border);">
-        <a href="{{ path('home') }}" style="color: var(--accent); text-decoration: none; font-weight: 500;">← Back to all articles</a>
+    <div style="margin-top: 2.5rem; padding-top: 1.5rem; border-top: 1px solid var(--border);">
+        <a href="{{ path('home') }}" style="color: var(--fg-muted); text-decoration: none; font-size: 0.8rem;">← wróć</a>
     </div>
+{% endblock %}
+
+{% block javascripts %}
+<script>
+(function() {
+    var slug = '{{ post.slug }}';
+    var m = document.cookie.match(/(?:^|; )read_posts=([^;]*)/);
+    var s = m ? JSON.parse(decodeURIComponent(m[1])) : [];
+    if (s.indexOf(slug) === -1) { s.push(slug); document.cookie = 'read_posts=' + encodeURIComponent(JSON.stringify(s)) + ';path=/;max-age=31536000;SameSite=Lax'; }
+})();
+</script>
 {% endblock %}

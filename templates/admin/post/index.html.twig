@@ -58,6 +58,11 @@
                     <form method="post" action="{{ path('admin_post_delete', {id: post.id}) }}" style="display:inline;" onsubmit="return confirm('Delete this post?');">
                         <input type="hidden" name="_token" value="{{ csrf_token('delete' ~ post.id) }}">
                         <button type="submit" style="background:none; border:none; color:#e53e3e; cursor:pointer; padding:0; font:inherit; text-decoration:underline;">Delete</button>
+                    </form> |
+                    <form method="post" action="{{ path('admin_post_regenerate_title', {id: post.id}) }}" style="display:inline;">
+                        <input type="hidden" name="_token" value="{{ csrf_token('regen' ~ post.id) }}">
+                        <button type="submit" style="background:none; border:none; color:#805ad5; cursor:pointer; padding:0; font:inherit; text-decoration:underline;" title="Regeneruj tytuł po polsku">🇵🇱 Tytuł</button>
+                    </form>
                     </form>
                 </td>
             </tr>

@@ -97,7 +97,8 @@ class PostService
     public function createFromUrl(string $url): array
     {
         $content = $this->summarizer->summarizeUrl($url);
-        $title = $this->extractTitle($content);
+        $title = $this->summarizer->generateTitle($content);
+        $tags = $this->summarizer->generateTags($content);
 
         return $this->create([
             'title' => $title,
@@ -106,7 +107,7 @@ class PostService
             'status' => 'draft',
             'auto_generated' => true,
             'source_urls' => [$url],
-            'tags' => [],
+            'tags' => $tags,
         ]);
     }
 
@@ -146,15 +147,5 @@ class PostService
         }
 
         return $data;
-    }
-
-    private function extractTitle(string $content): string
-    {
-        $firstLine = strtok($content, "\n");
-        if (mb_strlen($firstLine) > 100) {
-            $firstLine = mb_substr($firstLine, 0, 100);
-        }
-
-        return $firstLine ?: 'Untitled Article';
     }
 }

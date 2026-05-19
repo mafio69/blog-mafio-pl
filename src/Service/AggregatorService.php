@@ -35,19 +35,22 @@ readonly class AggregatorService
 
                 try {
                     $summary = $this->summarizer->summarizeUrl($link['url']);
+                    $title = $this->summarizer->generateTitle($summary);
+                    $tags = $this->summarizer->generateTags($summary);
+                    $tags[] = $feed['category'];
 
                     $this->postService->create([
-                        'title' => $link['title'],
+                        'title' => $title,
                         'content' => $summary,
                         'summary' => mb_substr($summary, 0, 300) . '...',
                         'status' => 'draft',
                         'auto_generated' => true,
                         'source_urls' => [$link['url']],
-                        'tags' => [$feed['category']],
+                        'tags' => array_unique($tags),
                     ]);
 
                     $processedCount++;
-                    $allResults[] = $link['title'];
+                    $allResults[] = $title;
                 } catch (\Throwable $e) {
                     $this->logger->error('Error processing article', [
                         'feed_url' => $feed['url'],

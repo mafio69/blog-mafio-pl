@@ -38,6 +38,11 @@ class SecurityControllerTest extends WebTestCase
     public function testHomePageIsPublic(): void
     {
         $client = static::createClient();
+
+        $postService = $this->createMock(\App\Service\PostService::class);
+        $postService->method('findPublished')->willReturn([]);
+        static::getContainer()->set(\App\Service\PostService::class, $postService);
+
         $client->request('GET', '/');
 
         $this->assertResponseIsSuccessful();
