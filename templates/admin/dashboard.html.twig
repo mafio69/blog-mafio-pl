@@ -6,6 +6,8 @@
     <h1>Admin Dashboard</h1>
     <p>Logged in as: {{ app.user.userIdentifier }}</p>
     <nav>
+        <a href="{{ path('admin_post_index') }}">📝 Manage Posts</a> |
+        <a href="{{ path('admin_feed_index') }}">📡 Sources (RSS)</a> |
         <a href="{{ path('admin_project_state') }}">📋 Project State</a> |
         <a href="{{ path('logout') }}">Logout</a>
     </nav>

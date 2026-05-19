@@ -1,0 +1,45 @@
+{% extends 'base.html.twig' %}
+
+{% block title %}Posts — Admin{% endblock %}
+
+{% block body %}
+    <h1>Posts</h1>
+    <p>
+        <a href="{{ path('admin_dashboard') }}">← Dashboard</a> | 
+        <a href="{{ path('admin_post_new') }}">➕ Add New Post</a> |
+        <a href="{{ path('logout') }}">Logout</a>
+    </p>
+
+    <table style="width:100%; border-collapse:collapse; margin-bottom:2rem;">
+        <tr style="background:#f0f0f0;">
+            <th style="text-align:left; padding:0.5rem; border:1px solid #ddd;">Title</th>
+            <th style="text-align:left; padding:0.5rem; border:1px solid #ddd;">Status</th>
+            <th style="text-align:left; padding:0.5rem; border:1px solid #ddd;">Created</th>
+            <th style="text-align:left; padding:0.5rem; border:1px solid #ddd;">Actions</th>
+        </tr>
+        {% for post in posts %}
+            <tr>
+                <td style="padding:0.5rem; border:1px solid #ddd; font-weight:bold;">{{ post.title }}</td>
+                <td style="padding:0.5rem; border:1px solid #ddd;">
+                    <span style="padding: 0.2rem 0.5rem; border-radius: 3px; font-size: 0.8rem; background: {{ post.status == 'published' ? '#e6fffa' : '#fff5f5' }}; color: {{ post.status == 'published' ? '#2c7a7b' : '#c53030' }}; border: 1px solid {{ post.status == 'published' ? '#81e6d9' : '#feb2b2' }};">
+                        {{ post.status|upper }}
+                    </span>
+                </td>
+                <td style="padding:0.5rem; border:1px solid #ddd; font-size:0.8rem; color:#666;">
+                    {{ post.created_at|date('Y-m-d H:i') }}
+                </td>
+                <td style="padding:0.5rem; border:1px solid #ddd;">
+                    <a href="{{ path('admin_post_edit', {id: post.id}) }}">Edit</a> |
+                    <form method="post" action="{{ path('admin_post_delete', {id: post.id}) }}" style="display:inline;" onsubmit="return confirm('Are you sure?');">
+                        <input type="hidden" name="_token" value="{{ csrf_token('delete' ~ post.id) }}">
+                        <button type="submit" style="background:none; border:none; color:red; cursor:pointer; padding:0; font:inherit; text-decoration:underline;">Delete</button>
+                    </form>
+                </td>
+            </tr>
+        {% else %}
+            <tr>
+                <td colspan="4" style="padding:1rem; border:1px solid #ddd; text-align:center; color:#666;">No posts found.</td>
+            </tr>
+        {% endfor %}
+    </table>
+{% endblock %}

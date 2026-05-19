@@ -1,0 +1,50 @@
+{% extends 'base.html.twig' %}
+
+{% block title %}RSS Feeds — Admin{% endblock %}
+
+{% block body %}
+    <h1>RSS Feeds</h1>
+    <p>
+        <a href="{{ path('admin_dashboard') }}">← Dashboard</a> | 
+        <a href="{{ path('admin_feed_new') }}">➕ Add New Source</a> |
+        <a href="{{ path('logout') }}">Logout</a>
+    </p>
+
+    <table style="width:100%; border-collapse:collapse; margin-bottom:2rem;">
+        <tr style="background:#f0f0f0;">
+            <th style="text-align:left; padding:0.5rem; border:1px solid #ddd;">Name</th>
+            <th style="text-align:left; padding:0.5rem; border:1px solid #ddd;">Category</th>
+            <th style="text-align:left; padding:0.5rem; border:1px solid #ddd;">Status</th>
+            <th style="text-align:left; padding:0.5rem; border:1px solid #ddd;">Last Fetched</th>
+            <th style="text-align:left; padding:0.5rem; border:1px solid #ddd;">Actions</th>
+        </tr>
+        {% for feed in feeds %}
+            <tr>
+                <td style="padding:0.5rem; border:1px solid #ddd;">
+                    <div style="font-weight:bold;">{{ feed.name }}</div>
+                    <div style="font-size:0.75rem; color:#666;">{{ feed.url }}</div>
+                </td>
+                <td style="padding:0.5rem; border:1px solid #ddd;">{{ feed.category }}</td>
+                <td style="padding:0.5rem; border:1px solid #ddd;">
+                    <span style="color: {{ feed.active ? 'green' : 'red' }};">
+                        {{ feed.active ? 'ACTIVE' : 'INACTIVE' }}
+                    </span>
+                </td>
+                <td style="padding:0.5rem; border:1px solid #ddd; font-size:0.8rem; color:#666;">
+                    {{ feed.last_fetched_at ? feed.last_fetched_at|date('Y-m-d H:i') : 'Never' }}
+                </td>
+                <td style="padding:0.5rem; border:1px solid #ddd;">
+                    <a href="{{ path('admin_feed_edit', {id: feed.id}) }}">Edit</a> |
+                    <form method="post" action="{{ path('admin_feed_delete', {id: feed.id}) }}" style="display:inline;" onsubmit="return confirm('Are you sure?');">
+                        <input type="hidden" name="_token" value="{{ csrf_token('delete' ~ feed.id) }}">
+                        <button type="submit" style="background:none; border:none; color:red; cursor:pointer; padding:0; font:inherit; text-decoration:underline;">Delete</button>
+                    </form>
+                </td>
+            </tr>
+        {% else %}
+            <tr>
+                <td colspan="5" style="padding:1rem; border:1px solid #ddd; text-align:center; color:#666;">No feeds found.</td>
+            </tr>
+        {% endfor %}
+    </table>
+{% endblock %}

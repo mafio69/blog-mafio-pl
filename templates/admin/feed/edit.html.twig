@@ -1,0 +1,44 @@
+{% extends 'base.html.twig' %}
+
+{% block title %}{{ feed ? 'Edit Feed' : 'New Feed' }} — Admin{% endblock %}
+
+{% block body %}
+    <h1>{{ feed ? 'Edit Feed' : 'New Feed' }}</h1>
+    <p><a href="{{ path('admin_feed_index') }}">← Back to list</a></p>
+
+    <form method="post" style="display: flex; flex-direction: column; gap: 1rem; max-width: 600px;">
+        <div>
+            <label for="name" style="display: block; margin-bottom: 0.5rem; font-weight: bold;">Name</label>
+            <input type="text" id="name" name="name" value="{{ feed.name|default('') }}" required style="width: 100%; padding: 0.5rem; border: 1px solid #ccc; border-radius: 4px;">
+        </div>
+
+        <div>
+            <label for="url" style="display: block; margin-bottom: 0.5rem; font-weight: bold;">RSS URL</label>
+            <input type="url" id="url" name="url" value="{{ feed.url|default('') }}" required style="width: 100%; padding: 0.5rem; border: 1px solid #ccc; border-radius: 4px;">
+        </div>
+
+        <div>
+            <label for="category" style="display: block; margin-bottom: 0.5rem; font-weight: bold;">Category</label>
+            <select id="category" name="category" style="width: 100%; padding: 0.5rem; border: 1px solid #ccc; border-radius: 4px;">
+                <option value="php" {{ (feed.category|default('')) == 'php' ? 'selected' : '' }}>PHP</option>
+                <option value="tech" {{ (feed.category|default('')) == 'tech' ? 'selected' : '' }}>Tech</option>
+                <option value="nerd" {{ (feed.category|default('')) == 'nerd' ? 'selected' : '' }}>Nerd Info</option>
+                <option value="world" {{ (feed.category|default('')) == 'world' ? 'selected' : '' }}>World Events</option>
+            </select>
+        </div>
+
+        <div>
+            <label style="font-weight: bold;">
+                <input type="checkbox" name="active" value="1" {{ feed is null or feed.active ? 'checked' : '' }}> Active
+            </label>
+        </div>
+
+        <input type="hidden" name="_token" value="{{ csrf_token('feed') }}">
+
+        <div>
+            <button type="submit" style="padding: 0.7rem 1.5rem; background: #3182ce; color: white; border: none; border-radius: 4px; cursor: pointer; font-weight: bold;">
+                {{ feed ? 'Update Feed' : 'Create Feed' }}
+            </button>
+        </div>
+    </form>
+{% endblock %}
