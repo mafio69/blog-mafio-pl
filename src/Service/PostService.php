@@ -4,9 +4,14 @@ declare(strict_types=1);
 
 namespace App\Service;
 
+use Symfony\Component\HttpFoundation\Request;
+
 class PostService
 {
-    public function __construct(private SupabaseClient $supabase) {}
+    public function __construct(
+        private SupabaseClient $supabase,
+        private SummarizerService $summarizer,
+    ) {}
 
     public function findAll(): array
     {
@@ -46,7 +51,7 @@ class PostService
     public function create(array $data): array
     {
         if (!isset($data['slug']) && isset($data['title'])) {
-            $data['slug'] = $this->slugify($data['title']);
+            $data['slug'] = $this->generateSlug($data['title']);
         }
 
         return $this->supabase->insert('posts', $data);
@@ -62,7 +67,50 @@ class PostService
         $this->supabase->delete('posts', 'id=eq.' . $id);
     }
 
-    private function slugify(string $text): string
+    public function toggleStatus(string $id): void
+    {
+        $post = $this->findOneById($id);
+        if (!$post) {
+            return;
+        }
+
+        $newStatus = $post['status'] === 'published' ? 'draft' : 'published';
+        $data = ['status' => $newStatus];
+
+        if ($newStatus === 'published') {
+            $data['published_at'] = (new \DateTimeImmutable())->format(\DateTimeInterface::ATOM);
+        }
+
+        $this->update($id, $data);
+    }
+
+    public function createFromRequest(Request $request): array
+    {
+        return $this->create($this->extractPostData($request));
+    }
+
+    public function updateFromRequest(string $id, Request $request): array
+    {
+        return $this->update($id, $this->extractPostData($request));
+    }
+
+    public function createFromUrl(string $url): array
+    {
+        $content = $this->summarizer->summarizeUrl($url);
+        $title = $this->extractTitle($content);
+
+        return $this->create([
+            'title' => $title,
+            'content' => $content,
+            'summary' => mb_substr($content, 0, 300) . '...',
+            'status' => 'draft',
+            'auto_generated' => true,
+            'source_urls' => [$url],
+            'tags' => [],
+        ]);
+    }
+
+    public function generateSlug(string $text): string
     {
         $text = preg_replace('~[^\pL\d]+~u', '-', $text);
         $text = iconv('utf-8', 'us-ascii//TRANSLIT', $text);
@@ -71,10 +119,42 @@ class PostService
         $text = preg_replace('~-+~', '-', $text);
         $text = strtolower($text);
 
-        if (empty($text)) {
-            return 'n-a';
+        return empty($text) ? 'n-a' : $text;
+    }
+
+    private function extractPostData(Request $request): array
+    {
+        $tags = array_filter(array_map('trim', explode(',', $request->request->get('tags', ''))));
+        $sourceUrls = array_filter(array_map('trim', explode(',', $request->request->get('source_urls', ''))));
+
+        $data = [
+            'title' => $request->request->get('title'),
+            'content' => $request->request->get('content'),
+            'summary' => $request->request->get('summary'),
+            'status' => $request->request->get('status'),
+            'tags' => $tags,
+            'source_urls' => $sourceUrls,
+        ];
+
+        $slug = $request->request->get('slug');
+        if ($slug) {
+            $data['slug'] = $slug;
         }
 
-        return $text;
+        if ($data['status'] === 'published') {
+            $data['published_at'] = (new \DateTimeImmutable())->format(\DateTimeInterface::ATOM);
+        }
+
+        return $data;
+    }
+
+    private function extractTitle(string $content): string
+    {
+        $firstLine = strtok($content, "\n");
+        if (mb_strlen($firstLine) > 100) {
+            $firstLine = mb_substr($firstLine, 0, 100);
+        }
+
+        return $firstLine ?: 'Untitled Article';
     }
 }

@@ -1,56 +1,68 @@
 {% extends 'base.html.twig' %}
 
-{% block title %}blog.mafio.pl — Tech Blog{% endblock %}
+{% block title %}blog.mafio.pl — AI-Powered Tech Blog{% endblock %}
 
 {% block body %}
-    {% for post in posts %}
-        <article>
-            <div class="post-meta">
-                {{ post.published_at|date('F d, Y') }}
-                {% if post.auto_generated %}
-                    &bull; <span title="Summarized by Gemini AI">🤖 AI Generated</span>
+    {% if posts|length > 0 %}
+        <div style="margin-bottom: 3rem;">
+            <p style="color: var(--muted); font-size: 0.9rem; text-transform: uppercase; letter-spacing: 0.1em; font-weight: 600;">Latest Articles</p>
+        </div>
+
+        {% for post in posts %}
+            <article style="margin-bottom: 2.5rem; padding-bottom: 2.5rem; border-bottom: 1px solid var(--border);">
+                <div class="post-meta">
+                    {{ post.published_at|date('d M Y') }}
+                    {% if post.auto_generated %}
+                        &bull; <span title="AI-generated summary">🤖 AI</span>
+                    {% endif %}
+                    {% if post.source_urls is defined and post.source_urls|length > 0 %}
+                        &bull; <a href="{{ post.source_urls[0] }}" target="_blank" rel="noopener" style="color: var(--muted); text-decoration: none; font-size: 0.8rem;">source ↗</a>
+                    {% endif %}
+                </div>
+
+                <h2 class="post-title">
+                    <a href="{{ path('post_show', {slug: post.slug}) }}">{{ post.title }}</a>
+                </h2>
+
+                {% if post.summary %}
+                    <p class="post-summary">{{ post.summary|length > 250 ? post.summary[:250] ~ '…' : post.summary }}</p>
                 {% endif %}
-            </div>
-            
-            <h2 class="post-title">
-                <a href="#">{{ post.title }}</a>
-            </h2>
-            
-            {% if post.summary %}
-                <p class="post-summary">{{ post.summary }}</p>
-            {% endif %}
-            
-            <div class="tags">
-                {% for tag in post.tags %}
-                    <span class="tag">{{ tag }}</span>
-                {% endfor %}
-            </div>
-        </article>
+
+                <div style="display: flex; align-items: center; gap: 1rem; flex-wrap: wrap;">
+                    <div class="tags">
+                        {% for tag in post.tags|default([]) %}
+                            <span class="tag">{{ tag }}</span>
+                        {% endfor %}
+                    </div>
+                    <a href="{{ path('post_show', {slug: post.slug}) }}" style="font-size: 0.85rem; color: var(--accent); text-decoration: none; font-weight: 500;">Read more →</a>
+                </div>
+            </article>
+        {% endfor %}
     {% else %}
-        <div style="text-align: center; padding: 3rem 0;">
-            <p style="font-size: 3rem; margin-bottom: 1rem;">🚀</p>
-            <h2 style="font-size: 1.75rem; margin-bottom: 0.75rem;">Coming soon!</h2>
-            <p style="font-size: 1.1rem; color: var(--muted); max-width: 480px; margin: 0 auto 2.5rem;">
+        <div style="text-align: center; padding: 4rem 0;">
+            <p style="font-size: 3.5rem; margin-bottom: 1.5rem;">🚀</p>
+            <h2 style="font-size: 2rem; margin-bottom: 1rem; font-weight: 800;">Coming soon!</h2>
+            <p style="font-size: 1.1rem; color: var(--muted); max-width: 500px; margin: 0 auto 3rem;">
                 Auto-aggregated articles from the PHP, Docker & DevOps world — summarized by AI, served fresh.
             </p>
 
-            <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(180px, 1fr)); gap: 1.5rem; text-align: left; margin-top: 2rem;">
-                <div style="background: var(--card-bg); padding: 1.25rem; border-radius: 8px;">
-                    <p style="font-size: 1.5rem; margin: 0 0 0.5rem;">📡</p>
+            <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 1.5rem; text-align: left;">
+                <div style="background: var(--card-bg); padding: 1.5rem; border-radius: 10px; border: 1px solid var(--border);">
+                    <p style="font-size: 1.75rem; margin: 0 0 0.5rem;">📡</p>
                     <strong>RSS Aggregator</strong>
-                    <p style="color: var(--muted); font-size: 0.85rem; margin: 0.25rem 0 0;">Fetches from top dev feeds twice a day</p>
+                    <p style="color: var(--muted); font-size: 0.85rem; margin: 0.5rem 0 0;">Fetches from top dev feeds twice a day</p>
                 </div>
-                <div style="background: var(--card-bg); padding: 1.25rem; border-radius: 8px;">
-                    <p style="font-size: 1.5rem; margin: 0 0 0.5rem;">🤖</p>
+                <div style="background: var(--card-bg); padding: 1.5rem; border-radius: 10px; border: 1px solid var(--border);">
+                    <p style="font-size: 1.75rem; margin: 0 0 0.5rem;">🤖</p>
                     <strong>AI Summaries</strong>
-                    <p style="color: var(--muted); font-size: 0.85rem; margin: 0.25rem 0 0;">Gemini Pro generates concise TL;DRs</p>
+                    <p style="color: var(--muted); font-size: 0.85rem; margin: 0.5rem 0 0;">Gemini generates full articles from sources</p>
                 </div>
-                <div style="background: var(--card-bg); padding: 1.25rem; border-radius: 8px;">
-                    <p style="font-size: 1.5rem; margin: 0 0 0.5rem;">⚡</p>
+                <div style="background: var(--card-bg); padding: 1.5rem; border-radius: 10px; border: 1px solid var(--border);">
+                    <p style="font-size: 1.75rem; margin: 0 0 0.5rem;">⚡</p>
                     <strong>Zero Bloat</strong>
-                    <p style="color: var(--muted); font-size: 0.85rem; margin: 0.25rem 0 0;">Server-rendered, fast, no JavaScript</p>
+                    <p style="color: var(--muted); font-size: 0.85rem; margin: 0.5rem 0 0;">Server-rendered, fast, no JavaScript</p>
                 </div>
             </div>
         </div>
-    {% endfor %}
+    {% endif %}
 {% endblock %}

@@ -17,7 +17,8 @@
         "symfony/scheduler": "8.0.*",
         "symfony/security-bundle": "8.0.*",
         "symfony/twig-bundle": "8.0.*",
-        "symfony/yaml": "8.0.*"
+        "symfony/yaml": "8.0.*",
+        "ext-simplexml": "*"
     },
     "config": {
         "allow-plugins": {
