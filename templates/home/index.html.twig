@@ -27,8 +27,30 @@
             </div>
         </article>
     {% else %}
-        <div style="text-align: center; padding: 4rem 0;">
-            <p style="font-size: 1.25rem; color: var(--muted);">No posts yet. Check back soon!</p>
+        <div style="text-align: center; padding: 3rem 0;">
+            <p style="font-size: 3rem; margin-bottom: 1rem;">🚀</p>
+            <h2 style="font-size: 1.75rem; margin-bottom: 0.75rem;">Coming soon!</h2>
+            <p style="font-size: 1.1rem; color: var(--muted); max-width: 480px; margin: 0 auto 2.5rem;">
+                Auto-aggregated articles from the PHP, Docker & DevOps world — summarized by AI, served fresh.
+            </p>
+
+            <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(180px, 1fr)); gap: 1.5rem; text-align: left; margin-top: 2rem;">
+                <div style="background: var(--card-bg); padding: 1.25rem; border-radius: 8px;">
+                    <p style="font-size: 1.5rem; margin: 0 0 0.5rem;">📡</p>
+                    <strong>RSS Aggregator</strong>
+                    <p style="color: var(--muted); font-size: 0.85rem; margin: 0.25rem 0 0;">Fetches from top dev feeds twice a day</p>
+                </div>
+                <div style="background: var(--card-bg); padding: 1.25rem; border-radius: 8px;">
+                    <p style="font-size: 1.5rem; margin: 0 0 0.5rem;">🤖</p>
+                    <strong>AI Summaries</strong>
+                    <p style="color: var(--muted); font-size: 0.85rem; margin: 0.25rem 0 0;">Gemini Pro generates concise TL;DRs</p>
+                </div>
+                <div style="background: var(--card-bg); padding: 1.25rem; border-radius: 8px;">
+                    <p style="font-size: 1.5rem; margin: 0 0 0.5rem;">⚡</p>
+                    <strong>Zero Bloat</strong>
+                    <p style="color: var(--muted); font-size: 0.85rem; margin: 0.25rem 0 0;">Server-rendered, fast, no JavaScript</p>
+                </div>
+            </div>
         </div>
     {% endfor %}
 {% endblock %}
