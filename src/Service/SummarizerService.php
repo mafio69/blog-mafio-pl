@@ -24,13 +24,19 @@ class SummarizerService
 
         // 3. Prepare prompt
         $prompt = <<<PROMPT
-Przeanalizuj poniższy artykuł techniczny i napisz jego streszczenie w języku polskim.
-Streszczenie powinno:
-- Składać się z dokładnie 2-3 akapitów.
-- Być napisane językiem profesjonalnym, ale przystępnym dla programisty.
-- Skupiać się na najważniejszych wnioskach technicznych i nowościach.
+Na podstawie poniższego artykułu napisz PEŁNY, SAMODZIELNY artykuł po polsku (minimum 5-7 akapitów, 800-1200 słów).
 
-Artykuł:
+Wymagania:
+- Artykuł musi być kompletny i czytelny BEZ sięgania do oryginału.
+- Zacznij od mocnego wstępu wyjaśniającego kontekst i dlaczego temat jest ważny.
+- Rozwiń szczegóły techniczne: jak to działa, jakie problemy rozwiązuje, przykłady użycia.
+- Dodaj sekcję z praktycznymi wnioskami dla programisty.
+- Zakończ podsumowaniem i perspektywą na przyszłość.
+- Pisz profesjonalnie ale przystępnie, jak doświadczony bloger techniczny.
+- NIE używaj nagłówków markdown ani formatowania — pisz ciągłym tekstem z akapitami.
+- NIE zaczynaj od "Oto artykuł" ani podobnych meta-wstępów.
+
+Artykuł źródłowy:
 $text
 PROMPT;
 
