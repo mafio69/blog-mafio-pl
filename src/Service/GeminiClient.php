@@ -9,7 +9,7 @@ use Symfony\Contracts\HttpClient\HttpClientInterface;
 
 class GeminiClient
 {
-    private const MODEL = 'gemini-2.0-flash-exp';
+    private const MODEL = 'gemini-2.5-flash-preview-05-20';
     private const API_URL = 'https://generativelanguage.googleapis.com/v1/models/';
     private const MAX_RETRIES = 3;
     private const RETRY_DELAY_MS = 1000;

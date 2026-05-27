@@ -224,13 +224,29 @@ readonly class AggregatorService
 
     private function isDuplicate(string $url): bool
     {
-        $allPosts = $this->postService->findAll();
+        // Use pagination to prevent memory issues with large datasets
+        $limit = 100;
+        $offset = 0;
         
-        foreach ($allPosts as $post) {
-            $sourceUrls = $post['source_urls'] ?? [];
-            if (in_array($url, $sourceUrls, true)) {
-                return true;
+        while (true) {
+            $posts = $this->postService->findAll($limit, $offset);
+            
+            if (empty($posts)) {
+                break;
             }
+            
+            foreach ($posts as $post) {
+                $sourceUrls = $post['source_urls'] ?? [];
+                if (in_array($url, $sourceUrls, true)) {
+                    return true;
+                }
+            }
+            
+            if (count($posts) < $limit) {
+                break;
+            }
+            
+            $offset += $limit;
         }
 
         return false;
@@ -244,7 +260,19 @@ readonly class AggregatorService
 
         $headlines = '';
         foreach ($items as $index => $item) {
+            // Validate headline data
+            if (empty($item['title']) || !is_string($item['title'])) {
+                continue;
+            }
+            if (empty($item['url']) || !is_string($item['url'])) {
+                continue;
+            }
             $headlines .= "$index. {$item['title']}\n";
+        }
+
+        if (empty($headlines)) {
+            $this->logger->warning('No valid headlines to triage');
+            return [];
         }
 
         $prompt = <<<PROMPT
@@ -264,13 +292,27 @@ readonly class AggregatorService
             $headlines
             PROMPT;
 
-        $response = $this->geminiClient->generateContent($prompt);
-        $json = preg_replace('/^```json\s*|```$/m', '', $response);
-        $indices = json_decode(trim($json), true) ?? [];
+        try {
+            $response = $this->geminiClient->generateContent($prompt);
+            $json = preg_replace('/^```json\s*|```$/m', '', $response);
+            $indices = json_decode(trim($json), true, flags: JSON_THROW_ON_ERROR) ?? [];
+            
+            if (!is_array($indices)) {
+                $this->logger->warning('Invalid triage response from Gemini', ['response' => $response]);
+                return [];
+            }
+        } catch (\Throwable $e) {
+            $this->logger->error('Failed to triage headlines', [
+                'error' => $e->getMessage(),
+                'exception' => get_class($e),
+            ]);
+            // Fallback: return first 3 items if AI fails
+            return array_slice($items, 0, 3);
+        }
 
         $selected = [];
         foreach ($indices as $index) {
-            if (isset($items[$index])) {
+            if (is_int($index) && isset($items[$index])) {
                 $selected[] = $items[$index];
             }
         }

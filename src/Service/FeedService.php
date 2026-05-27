@@ -51,6 +51,42 @@ class FeedService
 
     public function addFeed(string $name, string $url, string $category): array
     {
+        // Validate input data
+        if (empty($name) || !is_string($name)) {
+            throw new \InvalidArgumentException('Feed name is required and must be a string');
+        }
+        
+        if (empty($url) || !is_string($url)) {
+            throw new \InvalidArgumentException('Feed URL is required and must be a string');
+        }
+        
+        if (!filter_var($url, FILTER_VALIDATE_URL)) {
+            throw new \InvalidArgumentException('Invalid URL format');
+        }
+        
+        $parsedUrl = parse_url($url);
+        if (!isset($parsedUrl['scheme']) || !in_array(strtolower($parsedUrl['scheme']), ['http', 'https'], true)) {
+            throw new \InvalidArgumentException('URL must use HTTP or HTTPS scheme');
+        }
+        
+        if (empty($category) || !is_string($category)) {
+            throw new \InvalidArgumentException('Feed category is required and must be a string');
+        }
+
+        // Sanitize inputs
+        $name = trim($name);
+        $url = trim($url);
+        $category = trim($category);
+        
+        // Validate lengths
+        if (mb_strlen($name) > 200) {
+            throw new \InvalidArgumentException('Feed name cannot exceed 200 characters');
+        }
+        
+        if (mb_strlen($category) > 100) {
+            throw new \InvalidArgumentException('Category cannot exceed 100 characters');
+        }
+
         return $this->supabase->insert('feeds', [
             'name' => $name,
             'url' => $url,
