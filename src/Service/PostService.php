@@ -13,18 +13,22 @@ class PostService
         private SummarizerService $summarizer,
     ) {}
 
-    public function findAll(): array
+    public function findAll(int $limit = 100, int $offset = 0): array
     {
         return $this->supabase->select('posts', [
             'order' => 'created_at.desc',
+            'limit' => min($limit, 500), // Hard cap to prevent memory issues
+            'offset' => max(0, $offset),
         ]);
     }
 
-    public function findPublished(): array
+    public function findPublished(int $limit = 50, int $offset = 0): array
     {
         return $this->supabase->select('posts', [
             'status' => 'eq.published',
             'order' => 'published_at.desc',
+            'limit' => min($limit, 200),
+            'offset' => max(0, $offset),
         ]);
     }
 
@@ -50,8 +54,50 @@ class PostService
 
     public function create(array $data): array
     {
-        if (!isset($data['slug']) && isset($data['title'])) {
+        // Validate required fields
+        if (empty($data['title'])) {
+            throw new \InvalidArgumentException('Title is required');
+        }
+        
+        if (empty($data['content'])) {
+            throw new \InvalidArgumentException('Content is required');
+        }
+
+        // Sanitize and validate data
+        $data['title'] = trim($data['title']);
+        if (mb_strlen($data['title']) > 200) {
+            throw new \InvalidArgumentException('Title cannot exceed 200 characters');
+        }
+
+        if (isset($data['summary']) && mb_strlen($data['summary']) > 500) {
+            $data['summary'] = mb_substr($data['summary'], 0, 500) . '...';
+        }
+
+        if (isset($data['tags']) && is_array($data['tags'])) {
+            $data['tags'] = array_filter(
+                array_map(fn($tag) => is_string($tag) ? trim($tag) : null, $data['tags']),
+                fn($tag) => !empty($tag) && strlen($tag) <= 30
+            );
+        }
+
+        if (isset($data['source_urls']) && is_array($data['source_urls'])) {
+            $data['source_urls'] = array_filter(
+                array_map(fn($url) => filter_var(trim($url), FILTER_VALIDATE_URL) ?: null, $data['source_urls']),
+            );
+        }
+
+        if (!isset($data['slug'])) {
             $data['slug'] = $this->generateSlug($data['title']);
+        } else {
+            $data['slug'] = $this->sanitizeSlug($data['slug']);
+        }
+
+        // Set default status if not provided
+        $data['status'] ??= 'draft';
+
+        // Validate status
+        if (!in_array($data['status'], ['draft', 'published', 'archived'], true)) {
+            throw new \InvalidArgumentException('Invalid status: ' . $data['status']);
         }
 
         return $this->supabase->insert('posts', $data);
@@ -120,7 +166,39 @@ class PostService
         $text = preg_replace('~-+~', '-', $text);
         $text = strtolower($text);
 
-        return empty($text) ? 'n-a' : $text;
+        if (empty($text)) {
+            return 'n-a-' . bin2hex(random_bytes(4));
+        }
+
+        // Ensure uniqueness by checking existing slugs
+        $originalSlug = $text;
+        $counter = 1;
+        
+        while ($this->findOneBySlug($text) !== null) {
+            $text = $originalSlug . '-' . $counter;
+            $counter++;
+            
+            if ($counter > 100) {
+                return $originalSlug . '-' . bin2hex(random_bytes(4));
+            }
+        }
+
+        return $text;
+    }
+
+    private function sanitizeSlug(string $slug): string
+    {
+        $slug = trim($slug);
+        $slug = preg_replace('~[^-\w]+~', '', $slug);
+        $slug = preg_replace('~-+~', '-', $slug);
+        $slug = trim($slug, '-');
+        $slug = strtolower($slug);
+        
+        if (empty($slug)) {
+            throw new \InvalidArgumentException('Invalid slug');
+        }
+
+        return $slug;
     }
 
     private function extractPostData(Request $request): array

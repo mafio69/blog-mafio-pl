@@ -17,6 +17,7 @@ services:
             string $supabaseUrl: '%env(SUPABASE_URL)%'
             string $serviceRoleKey: '%env(SUPABASE_SERVICE_ROLE_KEY)%'
             string $googleApiKey: '%env(GOOGLE_API_KEY)%'
+            string $geminiModel: '%env(GEMINI_MODEL)%'
 
     # makes classes in src/ available to be used as services
     # this creates a service per class whose id is the fully-qualified class name

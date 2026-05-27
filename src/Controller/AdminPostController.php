@@ -15,10 +15,15 @@ use Symfony\Component\Routing\Attribute\Route;
 class AdminPostController extends AbstractController
 {
     #[Route('', name: 'admin_post_index')]
-    public function index(PostService $postService): Response
+    public function index(Request $request, PostService $postService): Response
     {
+        $page = max(1, (int) $request->query->get('page', 1));
+        $limit = 20;
+        $offset = ($page - 1) * $limit;
+
         return $this->render('admin/post/index.html.twig', [
-            'posts' => $postService->findAll(),
+            'posts' => $postService->findAll($limit, $offset),
+            'currentPage' => $page,
         ]);
     }
 
@@ -27,10 +32,19 @@ class AdminPostController extends AbstractController
     {
         if ($request->isMethod('POST')) {
             if (!$this->isCsrfTokenValid('post', $request->request->get('_token'))) {
-                throw $this->createAccessDeniedException('Invalid CSRF token.');
+                $this->addFlash('error', 'Invalid CSRF token.');
+                return $this->redirectToRoute('admin_post_new');
             }
 
-            $postService->createFromRequest($request);
+            try {
+                $postService->createFromRequest($request);
+                $this->addFlash('success', 'Post created successfully.');
+            } catch (\InvalidArgumentException $e) {
+                $this->addFlash('error', 'Validation error: ' . $e->getMessage());
+                return $this->redirectToRoute('admin_post_new');
+            } catch (\Throwable $e) {
+                $this->addFlash('error', 'Failed to create post: ' . $e->getMessage());
+            }
 
             return $this->redirectToRoute('admin_post_index');
         }
@@ -71,10 +85,19 @@ class AdminPostController extends AbstractController
 
         if ($request->isMethod('POST')) {
             if (!$this->isCsrfTokenValid('post', $request->request->get('_token'))) {
-                throw $this->createAccessDeniedException('Invalid CSRF token.');
+                $this->addFlash('error', 'Invalid CSRF token.');
+                return $this->redirectToRoute('admin_post_edit', ['id' => $id]);
             }
 
-            $postService->updateFromRequest($id, $request);
+            try {
+                $postService->updateFromRequest($id, $request);
+                $this->addFlash('success', 'Post updated successfully.');
+            } catch (\InvalidArgumentException $e) {
+                $this->addFlash('error', 'Validation error: ' . $e->getMessage());
+                return $this->redirectToRoute('admin_post_edit', ['id' => $id]);
+            } catch (\Throwable $e) {
+                $this->addFlash('error', 'Failed to update post: ' . $e->getMessage());
+            }
 
             return $this->redirectToRoute('admin_post_index');
         }
@@ -86,10 +109,16 @@ class AdminPostController extends AbstractController
     public function toggle(string $id, Request $request, PostService $postService): Response
     {
         if (!$this->isCsrfTokenValid('toggle' . $id, $request->request->get('_token'))) {
-            throw $this->createAccessDeniedException('Invalid CSRF token.');
+            $this->addFlash('error', 'Invalid CSRF token.');
+            return $this->redirectToRoute('admin_post_index');
         }
 
-        $postService->toggleStatus($id);
+        try {
+            $postService->toggleStatus($id);
+            $this->addFlash('success', 'Post status updated.');
+        } catch (\Throwable $e) {
+            $this->addFlash('error', 'Failed to toggle status: ' . $e->getMessage());
+        }
 
         return $this->redirectToRoute('admin_post_index');
     }
@@ -98,10 +127,16 @@ class AdminPostController extends AbstractController
     public function delete(string $id, Request $request, PostService $postService): Response
     {
         if (!$this->isCsrfTokenValid('delete' . $id, $request->request->get('_token'))) {
-            throw $this->createAccessDeniedException('Invalid CSRF token.');
+            $this->addFlash('error', 'Invalid CSRF token.');
+            return $this->redirectToRoute('admin_post_index');
         }
 
-        $postService->delete($id);
+        try {
+            $postService->delete($id);
+            $this->addFlash('success', 'Post deleted successfully.');
+        } catch (\Throwable $e) {
+            $this->addFlash('error', 'Failed to delete post: ' . $e->getMessage());
+        }
 
         return $this->redirectToRoute('admin_post_index');
     }
@@ -110,7 +145,8 @@ class AdminPostController extends AbstractController
     public function regenerateTitle(string $id, Request $request, PostService $postService, SummarizerService $summarizer): Response
     {
         if (!$this->isCsrfTokenValid('regen' . $id, $request->request->get('_token'))) {
-            throw $this->createAccessDeniedException('Invalid CSRF token.');
+            $this->addFlash('error', 'Invalid CSRF token.');
+            return $this->redirectToRoute('admin_post_index');
         }
 
         $post = $postService->findOneById($id);
@@ -122,7 +158,7 @@ class AdminPostController extends AbstractController
             $title = $summarizer->generateTitle($post['content']);
             $postService->update($id, ['title' => $title]);
             $this->addFlash('success', 'Tytuł wygenerowany: ' . $title);
-        } catch (\Exception $e) {
+        } catch (\Throwable $e) {
             $this->addFlash('error', 'Błąd: ' . $e->getMessage());
         }
 
