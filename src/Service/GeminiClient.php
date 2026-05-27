@@ -9,7 +9,6 @@ use Symfony\Contracts\HttpClient\HttpClientInterface;
 
 class GeminiClient
 {
-    private const MODEL = 'gemini-2.5-flash-preview-05-20';
     private const API_URL = 'https://generativelanguage.googleapis.com/v1/models/';
     private const MAX_RETRIES = 3;
     private const RETRY_DELAY_MS = 1000;
@@ -17,6 +16,7 @@ class GeminiClient
     public function __construct(
         private HttpClientInterface $httpClient,
         private string $googleApiKey,
+        private string $geminiModel,
         private LoggerInterface $logger,
     ) {}
 
@@ -27,7 +27,7 @@ class GeminiClient
             throw new \InvalidArgumentException('Prompt cannot be empty');
         }
 
-        $url = self::API_URL . self::MODEL . ':generateContent?key=' . $this->googleApiKey;
+        $url = self::API_URL . $this->geminiModel . ':generateContent?key=' . $this->googleApiKey;
 
         for ($attempt = 1; $attempt <= self::MAX_RETRIES; $attempt++) {
             try {
