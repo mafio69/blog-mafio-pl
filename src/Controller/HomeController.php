@@ -6,16 +6,22 @@ namespace App\Controller;
 
 use App\Service\PostService;
 use Symfony\Bundle\FrameworkBundle\Controller\AbstractController;
+use Symfony\Component\HttpFoundation\Request;
 use Symfony\Component\HttpFoundation\Response;
 use Symfony\Component\Routing\Attribute\Route;
 
 class HomeController extends AbstractController
 {
     #[Route('/', name: 'home')]
-    public function index(PostService $postService): Response
+    public function index(Request $request, PostService $postService): Response
     {
+        $page = max(1, (int) $request->query->get('page', 1));
+        $limit = 10;
+        $offset = ($page - 1) * $limit;
+
         return $this->render('home/index.html.twig', [
-            'posts' => $postService->findPublished(),
+            'posts' => $postService->findPublished($limit, $offset),
+            'currentPage' => $page,
         ]);
     }
 

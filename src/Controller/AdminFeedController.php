@@ -26,14 +26,23 @@ class AdminFeedController extends AbstractController
     {
         if ($request->isMethod('POST')) {
             if (!$this->isCsrfTokenValid('feed', $request->request->get('_token'))) {
-                throw $this->createAccessDeniedException('Invalid CSRF token.');
+                $this->addFlash('error', 'Invalid CSRF token.');
+                return $this->redirectToRoute('admin_feed_new');
             }
 
-            $feedService->addFeed(
-                $request->request->get('name'),
-                $request->request->get('url'),
-                $request->request->get('category')
-            );
+            try {
+                $feedService->addFeed(
+                    $request->request->get('name'),
+                    $request->request->get('url'),
+                    $request->request->get('category')
+                );
+                $this->addFlash('success', 'Feed added successfully.');
+            } catch (\InvalidArgumentException $e) {
+                $this->addFlash('error', 'Validation error: ' . $e->getMessage());
+                return $this->redirectToRoute('admin_feed_new');
+            } catch (\Throwable $e) {
+                $this->addFlash('error', 'Failed to add feed: ' . $e->getMessage());
+            }
 
             return $this->redirectToRoute('admin_feed_index');
         }
@@ -51,15 +60,42 @@ class AdminFeedController extends AbstractController
 
         if ($request->isMethod('POST')) {
             if (!$this->isCsrfTokenValid('feed', $request->request->get('_token'))) {
-                throw $this->createAccessDeniedException('Invalid CSRF token.');
+                $this->addFlash('error', 'Invalid CSRF token.');
+                return $this->redirectToRoute('admin_feed_edit', ['id' => $id]);
             }
 
-            $feedService->update($id, [
-                'name' => $request->request->get('name'),
-                'url' => $request->request->get('url'),
-                'category' => $request->request->get('category'),
-                'active' => $request->request->get('active') === '1',
-            ]);
+            try {
+                // Validate input data
+                $name = trim($request->request->get('name', ''));
+                $url = trim($request->request->get('url', ''));
+                $category = trim($request->request->get('category', ''));
+                
+                if (empty($name)) {
+                    throw new \InvalidArgumentException('Feed name is required');
+                }
+                
+                if (empty($url) || !filter_var($url, FILTER_VALIDATE_URL)) {
+                    throw new \InvalidArgumentException('Valid URL is required');
+                }
+                
+                if (empty($category)) {
+                    throw new \InvalidArgumentException('Category is required');
+                }
+
+                $feedService->update($id, [
+                    'name' => $name,
+                    'url' => $url,
+                    'category' => $category,
+                    'active' => $request->request->get('active') === '1',
+                ]);
+                
+                $this->addFlash('success', 'Feed updated successfully.');
+            } catch (\InvalidArgumentException $e) {
+                $this->addFlash('error', 'Validation error: ' . $e->getMessage());
+                return $this->redirectToRoute('admin_feed_edit', ['id' => $id]);
+            } catch (\Throwable $e) {
+                $this->addFlash('error', 'Failed to update feed: ' . $e->getMessage());
+            }
 
             return $this->redirectToRoute('admin_feed_index');
         }
@@ -71,10 +107,16 @@ class AdminFeedController extends AbstractController
     public function delete(string $id, Request $request, FeedService $feedService): Response
     {
         if (!$this->isCsrfTokenValid('delete' . $id, $request->request->get('_token'))) {
-            throw $this->createAccessDeniedException('Invalid CSRF token.');
+            $this->addFlash('error', 'Invalid CSRF token.');
+            return $this->redirectToRoute('admin_feed_index');
         }
 
-        $feedService->delete($id);
+        try {
+            $feedService->delete($id);
+            $this->addFlash('success', 'Feed deleted successfully.');
+        } catch (\Throwable $e) {
+            $this->addFlash('error', 'Failed to delete feed: ' . $e->getMessage());
+        }
 
         return $this->redirectToRoute('admin_feed_index');
     }

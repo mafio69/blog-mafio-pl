@@ -1,29 +1,3 @@
-###> symfony/framework-bundle ###
-/.env.local
-/.env.local.php
-/.env.*.local
-/.env.dev
-/config/secrets/prod/prod.decrypt.private.php
-/public/bundles/
-/var/
-/vendor/
-###< symfony/framework-bundle ###
-
-# IDE
-/.idea/
-/.vscode/
-
-# OS
-.DS_Store
-Thumbs.db
-
-# Temp
-/tmp/
-
-# Large docs (HTML dumps)
-/docs/*.html
-
-###> phpunit/phpunit ###
-/phpunit.xml
-/.phpunit.cache/
-###< phpunit/phpunit ###
+```
+.env
+```

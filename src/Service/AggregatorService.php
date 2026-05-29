@@ -18,64 +18,152 @@ readonly class AggregatorService
         private LoggerInterface $logger,
     ) {}
 
-    public function run(): array
+    public function run(int $maxFeeds = null, int $maxArticlesPerFeed = 10): array
     {
         $feeds = $this->feedService->getAllActive();
+        
+        if ($maxFeeds !== null && count($feeds) > $maxFeeds) {
+            $feeds = array_slice($feeds, 0, $maxFeeds);
+        }
+        
         $processedCount = 0;
         $allResults = [];
+        $errorCount = 0;
 
         foreach ($feeds as $feed) {
-            $items = $this->fetchRssItems($feed['url']);
-            $selectedLinks = $this->triageHeadlines($items);
-
-            foreach ($selectedLinks as $link) {
-                if ($this->postService->findOneBySlug($this->postService->generateSlug($link['title']))) {
+            try {
+                $items = $this->fetchRssItems($feed['url'], $maxArticlesPerFeed);
+                
+                if (empty($items)) {
+                    $this->logger->info('No items fetched from feed', ['feed_url' => $feed['url']]);
                     continue;
                 }
+                
+                $selectedLinks = $this->triageHeadlines($items);
 
-                try {
-                    $summary = $this->summarizer->summarizeUrl($link['url']);
-                    $title = $this->summarizer->generateTitle($summary);
-                    $tags = $this->summarizer->generateTags($summary);
-                    $tags[] = $feed['category'];
+                foreach ($selectedLinks as $link) {
+                    if (!$this->isValidUrl($link['url'])) {
+                        $this->logger->warning('Invalid URL detected, skipping', ['url' => $link['url']]);
+                        continue;
+                    }
 
-                    $this->postService->create([
-                        'title' => $title,
-                        'content' => $summary,
-                        'summary' => mb_substr($summary, 0, 300) . '...',
-                        'status' => 'draft',
-                        'auto_generated' => true,
-                        'source_urls' => [$link['url']],
-                        'tags' => array_unique($tags),
-                    ]);
+                    if ($this->isDuplicate($link['url'])) {
+                        $this->logger->info('Duplicate article detected, skipping', [
+                            'url' => $link['url'],
+                            'title' => $link['title'],
+                        ]);
+                        continue;
+                    }
 
-                    $processedCount++;
-                    $allResults[] = $title;
-                } catch (\Throwable $e) {
-                    $this->logger->error('Error processing article', [
-                        'feed_url' => $feed['url'],
-                        'article_title' => $link['title'],
-                        'article_url' => $link['url'],
-                        'error' => $e->getMessage(),
-                    ]);
+                    try {
+                        $summary = $this->summarizer->summarizeUrl($link['url']);
+                        
+                        if (empty(trim($summary))) {
+                            $this->logger->warning('Empty summary generated, skipping', ['url' => $link['url']]);
+                            continue;
+                        }
+                        
+                        $title = $this->summarizer->generateTitle($summary);
+                        $tags = $this->summarizer->generateTags($summary);
+                        $tags[] = $feed['category'];
+
+                        $this->postService->create([
+                            'title' => $title,
+                            'content' => $summary,
+                            'summary' => mb_substr($summary, 0, 300) . '...',
+                            'status' => 'draft',
+                            'auto_generated' => true,
+                            'source_urls' => [$link['url']],
+                            'tags' => array_unique($tags),
+                        ]);
+
+                        $processedCount++;
+                        $allResults[] = $title;
+                        $this->logger->info('Successfully processed article', [
+                            'title' => $title,
+                            'url' => $link['url'],
+                        ]);
+                    } catch (\Throwable $e) {
+                        $errorCount++;
+                        $this->logger->error('Error processing article', [
+                            'feed_url' => $feed['url'],
+                            'article_title' => $link['title'],
+                            'article_url' => $link['url'],
+                            'error' => $e->getMessage(),
+                            'exception' => get_class($e),
+                            'trace' => $e->getTraceAsString(),
+                        ]);
+                    }
                 }
-            }
 
-            $this->feedService->updateLastFetched($feed['id']);
+                $this->feedService->updateLastFetched($feed['id']);
+            } catch (\Throwable $e) {
+                $this->logger->error('Error processing feed', [
+                    'feed_id' => $feed['id'],
+                    'feed_name' => $feed['name'] ?? 'unknown',
+                    'feed_url' => $feed['url'],
+                    'error' => $e->getMessage(),
+                ]);
+            }
         }
 
-        return ['processed' => $processedCount, 'titles' => $allResults];
+        $this->logger->info('Aggregation completed', [
+            'feeds_processed' => count($feeds),
+            'articles_created' => $processedCount,
+            'errors' => $errorCount,
+        ]);
+
+        return [
+            'processed' => $processedCount,
+            'titles' => $allResults,
+            'errors' => $errorCount,
+            'feeds_count' => count($feeds),
+        ];
     }
 
-    private function fetchRssItems(string $url): array
+    private function fetchRssItems(string $url, int $limit = 10): array
     {
+        if (!$this->isValidUrl($url)) {
+            $this->logger->warning('Invalid RSS feed URL', ['url' => $url]);
+            return [];
+        }
+
         try {
-            $response = $this->httpClient->request('GET', $url);
-            $xml = new \SimpleXMLElement($response->getContent());
+            $response = $this->httpClient->request('GET', $url, [
+                'timeout' => 10,
+                'headers' => [
+                    'User-Agent' => 'Mozilla/5.0 (compatible; BlogAggregator/1.0)',
+                    'Accept' => 'application/rss+xml, application/xml, text/xml',
+                ],
+            ]);
+            
+            $statusCode = $response->getStatusCode();
+            if ($statusCode >= 400) {
+                $this->logger->error('RSS feed returned error status', [
+                    'url' => $url,
+                    'status' => $statusCode,
+                ]);
+                return [];
+            }
+
+            $content = $response->getContent();
+            
+            libxml_use_internal_errors(true);
+            $xml = new \SimpleXMLElement($content);
+            $errors = libxml_get_errors();
+            
+            if (!empty($errors)) {
+                $this->logger->warning('XML parsing warnings', [
+                    'url' => $url,
+                    'errors' => array_map(fn($e) => $e->message, $errors),
+                ]);
+                libxml_clear_errors();
+            }
         } catch (\Throwable $e) {
             $this->logger->error('Error fetching RSS feed', [
                 'url' => $url,
                 'error' => $e->getMessage(),
+                'exception' => get_class($e),
             ]);
 
             return [];
@@ -84,17 +172,84 @@ readonly class AggregatorService
         $items = [];
         $entries = $xml->channel->item ?? $xml->entry;
 
+        if (!$entries) {
+            $this->logger->warning('No items found in RSS feed', ['url' => $url]);
+            return [];
+        }
+
         foreach ($entries as $item) {
+            $title = (string) $item->title;
+            $link = (string) ($item->link['href'] ?? $item->link);
+            
+            if (empty($title) || empty($link)) {
+                $this->logger->debug('Skipping RSS item with missing title or link', [
+                    'feed_url' => $url,
+                    'title' => $title,
+                    'link' => $link,
+                ]);
+                continue;
+            }
+            
             $items[] = [
-                'title' => (string) $item->title,
-                'url' => (string) ($item->link['href'] ?? $item->link),
+                'title' => $title,
+                'url' => $link,
             ];
-            if (count($items) >= 10) {
+            
+            if (count($items) >= $limit) {
                 break;
             }
         }
 
         return $items;
+    }
+
+    private function isValidUrl(string $url): bool
+    {
+        if (!filter_var($url, FILTER_VALIDATE_URL)) {
+            return false;
+        }
+
+        $parsed = parse_url($url);
+        
+        if (!isset($parsed['scheme']) || !in_array(strtolower($parsed['scheme']), ['http', 'https'], true)) {
+            return false;
+        }
+
+        if (empty($parsed['host'])) {
+            return false;
+        }
+
+        return true;
+    }
+
+    private function isDuplicate(string $url): bool
+    {
+        // Use pagination to prevent memory issues with large datasets
+        $limit = 100;
+        $offset = 0;
+        
+        while (true) {
+            $posts = $this->postService->findAll($limit, $offset);
+            
+            if (empty($posts)) {
+                break;
+            }
+            
+            foreach ($posts as $post) {
+                $sourceUrls = $post['source_urls'] ?? [];
+                if (in_array($url, $sourceUrls, true)) {
+                    return true;
+                }
+            }
+            
+            if (count($posts) < $limit) {
+                break;
+            }
+            
+            $offset += $limit;
+        }
+
+        return false;
     }
 
     private function triageHeadlines(array $items): array
@@ -105,7 +260,19 @@ readonly class AggregatorService
 
         $headlines = '';
         foreach ($items as $index => $item) {
+            // Validate headline data
+            if (empty($item['title']) || !is_string($item['title'])) {
+                continue;
+            }
+            if (empty($item['url']) || !is_string($item['url'])) {
+                continue;
+            }
             $headlines .= "$index. {$item['title']}\n";
+        }
+
+        if (empty($headlines)) {
+            $this->logger->warning('No valid headlines to triage');
+            return [];
         }
 
         $prompt = <<<PROMPT
@@ -125,13 +292,27 @@ readonly class AggregatorService
             $headlines
             PROMPT;
 
-        $response = $this->geminiClient->generateContent($prompt);
-        $json = preg_replace('/^```json\s*|```$/m', '', $response);
-        $indices = json_decode(trim($json), true) ?? [];
+        try {
+            $response = $this->geminiClient->generateContent($prompt);
+            $json = preg_replace('/^```json\s*|```$/m', '', $response);
+            $indices = json_decode(trim($json), true, flags: JSON_THROW_ON_ERROR) ?? [];
+            
+            if (!is_array($indices)) {
+                $this->logger->warning('Invalid triage response from Gemini', ['response' => $response]);
+                return [];
+            }
+        } catch (\Throwable $e) {
+            $this->logger->error('Failed to triage headlines', [
+                'error' => $e->getMessage(),
+                'exception' => get_class($e),
+            ]);
+            // Fallback: return first 3 items if AI fails
+            return array_slice($items, 0, 3);
+        }
 
         $selected = [];
         foreach ($indices as $index) {
-            if (isset($items[$index])) {
+            if (is_int($index) && isset($items[$index])) {
                 $selected[] = $items[$index];
             }
         }
