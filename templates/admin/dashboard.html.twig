@@ -3,12 +3,59 @@
 {% block title %}Admin — blog.mafio.pl{% endblock %}
 
 {% block body %}
-    <h1>Admin Dashboard</h1>
-    <p>Logged in as: {{ app.user.userIdentifier }}</p>
-    <nav>
-        <a href="{{ path('admin_post_index') }}">📝 Manage Posts</a> |
-        <a href="{{ path('admin_feed_index') }}">📡 Sources (RSS)</a> |
-        <a href="{{ path('admin_project_state') }}">📋 Project State</a> |
-        <a href="{{ path('logout') }}">Logout</a>
-    </nav>
+<div style="max-width:700px; margin:2.5rem auto; padding:0 1.5rem;">
+
+  <div style="margin-bottom:2rem;">
+    <p style="font-size:.65rem;color:var(--fg-muted);letter-spacing:.1em;text-transform:uppercase;margin-bottom:.4rem;">&gt; admin@blog.mafio.pl</p>
+    <h1 style="font-size:1.1rem;font-weight:800;letter-spacing:-.02em;">dashboard<span style="opacity:.3">_</span></h1>
+    <p style="font-size:.72rem;color:var(--fg-muted);margin-top:.3rem;">zalogowany jako {{ app.user.userIdentifier }}</p>
+  </div>
+
+  <nav style="display:flex;flex-direction:column;gap:.5rem;">
+
+    <a href="{{ path('admin_post_index') }}"
+       style="display:flex;align-items:center;gap:.8rem;padding:.7rem 1rem;border:1px solid var(--border-hover);border-radius:5px;text-decoration:none;color:var(--fg);transition:border-color .15s,background .15s;"
+       onmouseover="this.style.borderColor='var(--fg-muted)';this.style.background='var(--bg-hover)'"
+       onmouseout="this.style.borderColor='var(--border-hover)';this.style.background='transparent'">
+      <span style="font-size:.7rem;font-weight:800;color:var(--fg-muted);min-width:60px;letter-spacing:.06em;">POSTY</span>
+      <span style="font-size:.78rem;color:var(--fg-dim);">Zarządzaj wpisami na blogu</span>
+      <span style="margin-left:auto;font-size:.65rem;color:var(--fg-muted);">→</span>
+    </a>
+
+    <a href="{{ path('admin_feed_index') }}"
+       style="display:flex;align-items:center;gap:.8rem;padding:.7rem 1rem;border:1px solid var(--border-hover);border-radius:5px;text-decoration:none;color:var(--fg);transition:border-color .15s,background .15s;"
+       onmouseover="this.style.borderColor='var(--fg-muted)';this.style.background='var(--bg-hover)'"
+       onmouseout="this.style.borderColor='var(--border-hover)';this.style.background='transparent'">
+      <span style="font-size:.7rem;font-weight:800;color:var(--fg-muted);min-width:60px;letter-spacing:.06em;">RSS</span>
+      <span style="font-size:.78rem;color:var(--fg-dim);">Źródła i feedsy</span>
+      <span style="margin-left:auto;font-size:.65rem;color:var(--fg-muted);">→</span>
+    </a>
+
+    <a href="{{ path('admin_project_state') }}"
+       style="display:flex;align-items:center;gap:.8rem;padding:.7rem 1rem;border:1px solid var(--border-hover);border-radius:5px;text-decoration:none;color:var(--fg);transition:border-color .15s,background .15s;"
+       onmouseover="this.style.borderColor='var(--fg-muted)';this.style.background='var(--bg-hover)'"
+       onmouseout="this.style.borderColor='var(--border-hover)';this.style.background='transparent'">
+      <span style="font-size:.7rem;font-weight:800;color:var(--fg-muted);min-width:60px;letter-spacing:.06em;">STATE</span>
+      <span style="font-size:.78rem;color:var(--fg-dim);">Project state / meta</span>
+      <span style="margin-left:auto;font-size:.65rem;color:var(--fg-muted);">→</span>
+    </a>
+
+    {# ===== NOWE: Content Generator ===== #}
+    <a href="{{ path('admin_content_generator') }}"
+       style="display:flex;align-items:center;gap:.8rem;padding:.7rem 1rem;border:1px solid var(--fg-muted);border-radius:5px;text-decoration:none;color:var(--fg);transition:border-color .15s,background .15s;"
+       onmouseover="this.style.borderColor='var(--fg)';this.style.background='var(--bg-hover)'"
+       onmouseout="this.style.borderColor='var(--fg-muted)';this.style.background='transparent'">
+      <span style="font-size:.7rem;font-weight:800;color:var(--fg);min-width:60px;letter-spacing:.06em;">CONTENT</span>
+      <span style="font-size:.78rem;color:var(--fg-dim);">Generator artykułów, felietonów i viral research</span>
+      <span style="margin-left:auto;font-size:.65rem;background:var(--fg);color:var(--bg);padding:.1rem .45rem;border-radius:3px;font-weight:800;letter-spacing:.06em;">NEW</span>
+    </a>
+
+  </nav>
+
+  <div style="margin-top:2.5rem;border-top:1px solid var(--border);padding-top:1rem;display:flex;justify-content:space-between;align-items:center;">
+    <span style="font-size:.65rem;color:var(--fg-muted);">blog.mafio.pl admin panel</span>
+    <a href="{{ path('logout') }}" style="font-size:.65rem;color:var(--fg-muted);text-decoration:none;letter-spacing:.05em;" onmouseover="this.style.color='var(--fg)'" onmouseout="this.style.color='var(--fg-muted)'">LOGOUT →</a>
+  </div>
+
+</div>
 {% endblock %}
