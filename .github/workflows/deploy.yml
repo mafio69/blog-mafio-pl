@@ -18,16 +18,19 @@ jobs:
       - name: Checkout code
         uses: actions/checkout@v4
 
-      - name: Configure SSH
+      - name: Install sshpass
+        run: sudo apt-get update && sudo apt-get install -y sshpass
+
+      - name: Add host to known_hosts
         run: |
           mkdir -p ~/.ssh
-          echo "${{ secrets.VPS_SSH_PRIVATE_KEY }}" > ~/.ssh/deploy_key
-          chmod 600 ~/.ssh/deploy_key
           ssh-keyscan -H ${{ secrets.VPS_HOST }} >> ~/.ssh/known_hosts 2>/dev/null
 
       - name: Deploy via rsync
+        env:
+          SSHPASS: ${{ secrets.VPS_SSH_PASSWORD }}
         run: |
-          rsync -azP --delete \
+          sshpass -e rsync -azP --delete \
             --exclude='.git' \
             --exclude='.github' \
             --exclude='.env.local' \
@@ -41,12 +44,14 @@ jobs:
             --exclude='docs/' \
             --exclude='tests/' \
             --exclude='phpunit.dist.xml' \
-            -e "ssh -i ~/.ssh/deploy_key -o StrictHostKeyChecking=no" \
+            -e "ssh -o StrictHostKeyChecking=no" \
             ./ ${{ secrets.VPS_USER }}@${{ secrets.VPS_HOST }}:${{ secrets.VPS_DEPLOY_PATH }}
 
       - name: Post-deploy commands
+        env:
+          SSHPASS: ${{ secrets.VPS_SSH_PASSWORD }}
         run: |
-          ssh -i ~/.ssh/deploy_key -o StrictHostKeyChecking=no \
+          sshpass -e ssh -o StrictHostKeyChecking=no \
             ${{ secrets.VPS_USER }}@${{ secrets.VPS_HOST }} << 'DEPLOY'
               cd ${{ secrets.VPS_DEPLOY_PATH }}
               composer install --no-dev --optimize-autoloader --no-interaction 2>/dev/null || \
@@ -54,7 +59,3 @@ jobs:
               php8.4 bin/console cache:clear --env=prod
               echo "Deploy completed at $(date)"
           DEPLOY
-
-      - name: Cleanup SSH key
-        if: always()
-        run: rm -f ~/.ssh/deploy_key
