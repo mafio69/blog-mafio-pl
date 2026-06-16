@@ -1,0 +1,458 @@
+{% extends 'base.html.twig' %}
+
+{% block title %}Generator Treści — Admin{% endblock %}
+
+{% block head %}
+<style>
+/* ===== Generator — terminal dark style spójny z base.html.twig ===== */
+.gen-wrap     { max-width: 820px; }
+.gen-header   { margin-bottom: 2rem; }
+.gen-title    { font-size: 1.1rem; font-weight: 800; letter-spacing: -.02em; margin-bottom: .3rem; }
+.gen-title span { opacity: .4; }
+.gen-subtitle { font-size: .75rem; color: var(--fg-muted); }
+
+/* Mode tabs */
+.mode-tabs { display: flex; gap: 0; margin-bottom: 2rem; border: 1px solid var(--border-hover); border-radius: 6px; overflow: hidden; width: fit-content; }
+.mode-tab  { font-family: var(--font); font-size: .72rem; font-weight: 700; letter-spacing: .05em;
+             padding: .5rem 1.2rem; background: var(--bg); color: var(--fg-muted); cursor: pointer;
+             border: none; transition: background .15s, color .15s; }
+.mode-tab + .mode-tab { border-left: 1px solid var(--border-hover); }
+.mode-tab:hover  { background: var(--bg-hover); color: var(--fg-dim); }
+.mode-tab.active { background: var(--bg-hover); color: var(--fg); }
+
+/* Form */
+.gen-form  { display: flex; flex-direction: column; gap: 1.2rem; }
+.field-grp { display: flex; flex-direction: column; gap: .4rem; }
+.field-grp label { font-size: .65rem; text-transform: uppercase; letter-spacing: .1em; color: var(--fg-muted); font-weight: 700; }
+.field-row2 { display: grid; grid-template-columns: 1fr 1fr; gap: 1rem; }
+
+.f-select, .f-input {
+    font-family: var(--font); font-size: .8rem;
+    background: var(--bg-elevated); color: var(--fg);
+    border: 1px solid var(--border-hover); border-radius: 5px;
+    padding: .5rem .75rem; width: 100%; outline: none;
+    appearance: none;
+    transition: border-color .15s;
+}
+.f-select:focus, .f-input:focus { border-color: var(--fg-muted); }
+
+.f-textarea {
+    font-family: var(--font); font-size: .82rem;
+    background: var(--bg-elevated); color: var(--fg);
+    border: 1px solid var(--border-hover); border-radius: 5px;
+    padding: .7rem .85rem; width: 100%; outline: none; resize: vertical; min-height: 110px; line-height: 1.6;
+    transition: border-color .15s;
+}
+.f-textarea:focus { border-color: var(--fg-muted); }
+.f-textarea::placeholder { color: var(--fg-muted); opacity: .6; }
+
+/* Advanced */
+.advanced-wrap  { border: 1px solid var(--border); border-radius: 5px; overflow: hidden; }
+.advanced-sum   { font-size: .68rem; color: var(--fg-muted); padding: .55rem .85rem; cursor: pointer; user-select: none; font-weight: 700; letter-spacing: .07em; text-transform: uppercase; }
+.advanced-sum::-webkit-details-marker { display: none; }
+.advanced-sum::before { content: '▶ '; font-size: .55rem; }
+details[open] .advanced-sum::before { content: '▼ '; }
+.advanced-body { padding: 1rem; display: flex; flex-direction: column; gap: 1rem; border-top: 1px solid var(--border); background: var(--bg-elevated); }
+
+.cb-row  { display: flex; align-items: center; gap: .6rem; font-size: .8rem; color: var(--fg-dim); cursor: pointer; }
+.cb-row input[type=checkbox] { accent-color: var(--fg); width: 14px; height: 14px; }
+
+/* Submit area */
+.submit-row  { display: flex; align-items: center; gap: 1rem; }
+.btn-gen {
+    font-family: var(--font); font-size: .78rem; font-weight: 800; letter-spacing: .05em; text-transform: uppercase;
+    background: var(--fg); color: var(--bg);
+    border: none; border-radius: 5px; padding: .6rem 1.6rem; cursor: pointer; min-width: 120px;
+    transition: opacity .15s;
+}
+.btn-gen:hover    { opacity: .85; }
+.btn-gen:disabled { opacity: .35; cursor: not-allowed; }
+.submit-note { font-size: .68rem; color: var(--fg-muted); }
+
+/* Spinner */
+.spinner { display: inline-block; width: 12px; height: 12px; border: 1.5px solid rgba(0,0,0,.3); border-top-color: #000; border-radius: 50%; animation: spin .5s linear infinite; }
+@keyframes spin { to { transform: rotate(360deg); } }
+
+/* Flash messages */
+.flash { font-size: .78rem; padding: .6rem .9rem; border-radius: 5px; margin-bottom: 1.5rem; }
+.flash-error   { background: #1a0505; color: #ff7070; border: 1px solid #ff4545; }
+.flash-success { background: #061a0c; color: #33ff33; border: 1px solid var(--fg-muted); }
+
+/* Result box */
+.result-box {
+    margin-top: 2rem;
+    border: 1px solid var(--fg-muted);
+    border-radius: 8px;
+    background: var(--bg-elevated);
+    padding: 1.5rem;
+    animation: fadeIn .25s ease;
+    display: none;
+}
+.result-box.show { display: block; }
+@keyframes fadeIn { from { opacity:0; transform:translateY(6px) } to { opacity:1; transform:translateY(0) } }
+
+.result-meta  { font-size: .65rem; color: var(--fg-muted); text-transform: uppercase; letter-spacing: .1em; margin-bottom: .8rem; }
+.result-badge { background: var(--fg); color: var(--bg); font-size: .6rem; font-weight: 800; padding: .15rem .5rem; border-radius: 3px; margin-right: .5rem; letter-spacing: .08em; }
+.result-title { font-size: 1rem; font-weight: 800; margin-bottom: .5rem; line-height: 1.4; }
+.result-lead  { font-size: .82rem; color: var(--fg-dim); font-weight: 700; margin-bottom: .9rem; }
+.result-body  { font-size: .82rem; color: var(--fg-dim); line-height: 1.8; white-space: pre-wrap; word-break: break-word; margin-bottom: 1rem; }
+.result-opinion {
+    border-left: 2px solid var(--fg-muted);
+    padding: .6rem .9rem;
+    font-size: .78rem; color: var(--fg-muted); font-style: italic;
+    margin-bottom: 1rem;
+}
+.result-actions { display: flex; gap: .6rem; margin-top: .8rem; flex-wrap: wrap; }
+.btn-copy  { font-family: var(--font); font-size: .7rem; font-weight: 700; letter-spacing: .05em;
+             background: transparent; color: var(--fg-muted); border: 1px solid var(--border-hover);
+             border-radius: 4px; padding: .35rem .8rem; cursor: pointer; transition: color .15s, border-color .15s; }
+.btn-copy:hover { color: var(--fg); border-color: var(--fg-muted); }
+.result-saved { font-size: .7rem; color: var(--fg-muted); margin-top: .5rem; font-family: var(--font); }
+.result-saved code { color: var(--fg); }
+
+/* Viral result */
+.viral-box { display: none; margin-top: 2rem; border: 1px solid #33ff3320; border-radius: 8px; padding: 1.5rem; background: var(--bg-elevated); animation: fadeIn .25s ease; }
+.viral-box.show { display: block; }
+.viral-head { font-size: .65rem; text-transform: uppercase; letter-spacing: .1em; color: var(--fg-muted); margin-bottom: 1rem; font-weight: 700; }
+.viral-items { display: flex; flex-direction: column; gap: .8rem; }
+.viral-item { border: 1px solid var(--border-hover); border-radius: 5px; padding: .9rem 1rem; }
+.viral-item-top { display: flex; gap: .8rem; align-items: center; margin-bottom: .4rem; }
+.vi-platform { font-size: .62rem; color: var(--fg-muted); text-transform: uppercase; letter-spacing: .1em; font-weight: 700; }
+.vi-score    { font-size: .62rem; color: var(--fg-muted); }
+.vi-title    { font-size: .88rem; font-weight: 700; margin-bottom: .3rem; }
+.vi-title a  { color: var(--fg); text-decoration: none; }
+.vi-title a:hover { color: var(--fg-dim); text-decoration: underline; }
+.vi-summary  { font-size: .78rem; color: var(--fg-dim); line-height: 1.6; }
+.vi-actions  { margin-top: .6rem; display: flex; gap: .5rem; }
+.btn-approve { font-family: var(--font); font-size: .68rem; font-weight: 700; letter-spacing: .05em; text-transform: uppercase;
+               background: transparent; color: var(--fg-muted); border: 1px solid var(--border-hover);
+               border-radius: 4px; padding: .28rem .7rem; cursor: pointer; transition: color .15s, border-color .15s; }
+.btn-approve:hover  { color: var(--fg); border-color: var(--fg-muted); }
+.btn-approve.saved  { color: var(--fg); border-color: var(--fg-muted); cursor: default; }
+
+/* Breadcrumb nav */
+.admin-nav { font-size: .7rem; color: var(--fg-muted); margin-bottom: 1.8rem; display: flex; gap: .5rem; align-items: center; flex-wrap: wrap; }
+.admin-nav a { color: var(--fg-muted); text-decoration: none; } .admin-nav a:hover { color: var(--fg); }
+.admin-nav span { opacity: .4; }
+</style>
+{% endblock %}
+
+{% block body %}
+<div class="gen-wrap">
+
+  <nav class="admin-nav">
+    <a href="{{ path('admin_dashboard') }}">admin</a>
+    <span>/</span>
+    <a href="{{ path('admin_content_generator') }}">content-generator</a>
+  </nav>
+
+  <div class="gen-header">
+    <h1 class="gen-title">&gt; content<span>_</span>generator</h1>
+    <p class="gen-subtitle">Wpisz temat lub prompt — Eva pisze, Perplexity szuka, Supabase zapisuje.</p>
+  </div>
+
+  {# Flash messages #}
+  {% for msg in app.flashes('error') %}
+    <div class="flash flash-error">⚠ {{ msg }}</div>
+  {% endfor %}
+  {% for msg in app.flashes('success') %}
+    <div class="flash flash-success">✓ {{ msg }}</div>
+  {% endfor %}
+
+  {# Mode tabs #}
+  <div class="mode-tabs">
+    <button type="button" class="mode-tab active" data-mode="article">📝 ARTYKUŁ</button>
+    <button type="button" class="mode-tab"        data-mode="felieton">✍ FELIETON</button>
+    <button type="button" class="mode-tab"        data-mode="viral_research">🔥 VIRAL RESEARCH</button>
+  </div>
+
+  <form id="gen-form" class="gen-form" novalidate>
+    <input type="hidden" name="_token" value="{{ csrf_token('content_generate') }}" id="csrf-article">
+    <input type="hidden" name="_token_viral" value="{{ csrf_token('content_viral') }}" id="csrf-viral">
+    <input type="hidden" name="mode" id="mode-input" value="article">
+
+    {# Textarea #}
+    <div class="field-grp">
+      <label for="prompt">Temat / prompt</label>
+      <textarea
+        id="prompt" name="prompt" class="f-textarea" required
+        placeholder="np. &quot;Napisz felieton: PHP w 2026 jest lepszy niż Go dla startupów&quot;
+lub: &quot;Artykuł o nowym RFC w PHP 9 — co zmienia?&quot;
+lub: &quot;Szukaj viralów o Claude Opus 4 z tego tygodnia&quot;"
+      ></textarea>
+    </div>
+
+    {# Newsletter + Sekcja #}
+    <div class="field-row2 article-only">
+      <div class="field-grp">
+        <label for="newsletter-type">Newsletter</label>
+        <select id="newsletter-type" name="newsletter_type" class="f-select">
+          <option value="ai_tech">AI & Tech Intelligence</option>
+          <option value="php_dev">PHP Dev</option>
+          <option value="none">— ogólny —</option>
+        </select>
+      </div>
+      <div class="field-grp">
+        <label for="section">Sekcja</label>
+        <select id="section" name="section" class="f-select">
+          <option value="">— wybierz sekcję —</option>
+          {% for s in sections['ai_tech'] %}
+            <option value="{{ s }}">{{ s }}</option>
+          {% endfor %}
+        </select>
+      </div>
+    </div>
+
+    {# Advanced #}
+    <details class="advanced-wrap article-only">
+      <summary class="advanced-sum">Opcje zaawansowane</summary>
+      <div class="advanced-body">
+        <div class="field-row2">
+          <div class="field-grp">
+            <label for="tone">Ton</label>
+            <select id="tone" name="tone" class="f-select">
+              <option value="opinionated">Opinionowany (domyślny)</option>
+              <option value="neutral">Neutralny / reporterski</option>
+              <option value="technical">Techniczny / ekspercki</option>
+              <option value="casual">Luźny / gawędziarski</option>
+            </select>
+          </div>
+          <div class="field-grp">
+            <label for="length">Długość</label>
+            <select id="length" name="length" class="f-select">
+              <option value="medium">Średni (400–600 słów)</option>
+              <option value="short">Krótki (200–300 słów)</option>
+              <option value="long">Długi (800–1200 słów)</option>
+            </select>
+          </div>
+        </div>
+        <div class="field-grp">
+          <label for="tag">Tag</label>
+          <input type="text" id="tag" name="tag" class="f-input" placeholder="np. PHP, AI, SECURITY">
+        </div>
+        <label class="cb-row">
+          <input type="checkbox" name="is_lead" id="is-lead" value="1">
+          Oznacz jako Lead artykuł sekcji
+        </label>
+      </div>
+    </details>
+
+    <div class="submit-row">
+      <button type="submit" class="btn-gen" id="submit-btn">
+        <span id="btn-label">GENERUJ</span>
+        <span id="btn-spinner" style="display:none"><span class="spinner"></span> czekaj…</span>
+      </button>
+      <span class="submit-note" id="submit-note">Perplexity Sonar przeszuka internet i napisze treść.</span>
+    </div>
+  </form>
+
+  {# ===== Wynik: artykuł / felieton ===== #}
+  <div id="result-box" class="result-box">
+    <div class="result-meta">
+      <span class="result-badge" id="result-badge">ARTYKUŁ</span>
+      <span id="result-ts"></span>
+    </div>
+    <h2 class="result-title" id="result-title"></h2>
+    <p class="result-lead" id="result-summary"></p>
+    <div class="result-body" id="result-body"></div>
+    <blockquote class="result-opinion" id="result-opinion"></blockquote>
+    <div class="result-actions">
+      <button class="btn-copy" id="btn-copy-body">Kopiuj treść</button>
+      <button class="btn-copy" id="btn-copy-all">Kopiuj wszystko (JSON)</button>
+    </div>
+    <p class="result-saved" id="result-saved" style="display:none">
+      ✓ Zapisano w Supabase · ID: <code id="result-id"></code>
+    </p>
+  </div>
+
+  {# ===== Wynik: viral research ===== #}
+  <div id="viral-box" class="viral-box">
+    <div class="viral-head">🔥 ZNALEZIONE VIRALS · <span id="viral-count">0</span> kandydatów · <span id="viral-saved">0</span> zapisanych w Supabase</div>
+    <div id="viral-items" class="viral-items"></div>
+  </div>
+
+</div>
+{% endblock %}
+
+{% block javascripts %}
+<script>
+(function () {
+  const form        = document.getElementById('gen-form');
+  const modeInput   = document.getElementById('mode-input');
+  const submitBtn   = document.getElementById('submit-btn');
+  const btnLabel    = document.getElementById('btn-label');
+  const btnSpinner  = document.getElementById('btn-spinner');
+  const submitNote  = document.getElementById('submit-note');
+  const resultBox   = document.getElementById('result-box');
+  const viralBox    = document.getElementById('viral-box');
+  const nlSelect    = document.getElementById('newsletter-type');
+  const sectionSel  = document.getElementById('section');
+
+  // ---- Mode tabs ----
+  document.querySelectorAll('.mode-tab').forEach(tab => {
+    tab.addEventListener('click', () => {
+      document.querySelectorAll('.mode-tab').forEach(t => t.classList.remove('active'));
+      tab.classList.add('active');
+      const mode = tab.dataset.mode;
+      modeInput.value = mode;
+
+      const isViral = mode === 'viral_research';
+      document.querySelectorAll('.article-only').forEach(el => {
+        el.style.display = isViral ? 'none' : '';
+      });
+
+      submitNote.textContent = isViral
+        ? 'Perplexity przeszuka PL i świat, znajdzie kandydatów i zapisze w tabeli virals.'
+        : 'Perplexity Sonar przeszuka internet i napisze treść.';
+      btnLabel.textContent = isViral ? 'SZUKAJ' : 'GENERUJ';
+
+      resultBox.classList.remove('show');
+      viralBox.classList.remove('show');
+    });
+  });
+
+  // ---- Newsletter type → sekcje ----
+  nlSelect.addEventListener('change', async () => {
+    const type = nlSelect.value;
+    const sections = {{ sections | json_encode | raw }};
+    const opts = sections[type] || [];
+
+    sectionSel.innerHTML = '<option value="">— wybierz sekcję —</option>';
+    opts.forEach(s => {
+      const o = document.createElement('option');
+      o.value = o.textContent = s;
+      sectionSel.appendChild(o);
+    });
+  });
+
+  // ---- Submit ----
+  form.addEventListener('submit', async (e) => {
+    e.preventDefault();
+
+    const mode     = modeInput.value;
+    const prompt   = document.getElementById('prompt').value.trim();
+    if (!prompt) {
+      alert('Wpisz temat / prompt.');
+      return;
+    }
+
+    // UI — loading
+    submitBtn.disabled = true;
+    btnLabel.style.display  = 'none';
+    btnSpinner.style.display = 'inline-flex';
+    resultBox.classList.remove('show');
+    viralBox.classList.remove('show');
+
+    const fd = new FormData(form);
+
+    const isViral = mode === 'viral_research';
+    const url     = isViral
+      ? '{{ path('admin_content_viral_research') }}'
+      : '{{ path('admin_content_generate') }}';
+
+    // Dla virala użyj osobnego tokenu CSRF
+    if (isViral) {
+      fd.set('_token', document.getElementById('csrf-viral').value);
+    }
+
+    try {
+      const resp = await fetch(url, { method: 'POST', body: fd });
+      const data = await resp.json();
+
+      if (data.error) {
+        alert('Błąd: ' + data.error);
+        return;
+      }
+
+      if (isViral) {
+        renderVirals(data);
+      } else {
+        renderArticle(data);
+      }
+    } catch (err) {
+      alert('Błąd sieci: ' + err.message);
+    } finally {
+      submitBtn.disabled = false;
+      btnLabel.style.display  = 'inline';
+      btnSpinner.style.display = 'none';
+    }
+  });
+
+  // ---- Render artykuł ----
+  function renderArticle(data) {
+    const r = data.result;
+    document.getElementById('result-badge').textContent    = data.mode === 'felieton' ? 'FELIETON' : 'ARTYKUŁ';
+    document.getElementById('result-ts').textContent       = new Date().toLocaleTimeString('pl-PL');
+    document.getElementById('result-title').textContent    = r.title       || '—';
+    document.getElementById('result-summary').textContent  = r.summary     || '';
+    document.getElementById('result-body').textContent     = r.body        || '';
+    document.getElementById('result-opinion').textContent  = r.our_opinion || '';
+
+    const savedEl = document.getElementById('result-saved');
+    const idEl    = document.getElementById('result-id');
+    if (r.id) {
+      idEl.textContent    = r.id;
+      savedEl.style.display = 'block';
+    } else {
+      savedEl.style.display = 'none';
+    }
+
+    resultBox.classList.add('show');
+    resultBox.scrollIntoView({ behavior: 'smooth', block: 'start' });
+
+    // Copy body
+    document.getElementById('btn-copy-body').onclick = () => {
+      navigator.clipboard.writeText(r.body || '');
+      document.getElementById('btn-copy-body').textContent = '✓ Skopiowano';
+      setTimeout(() => { document.getElementById('btn-copy-body').textContent = 'Kopiuj treść'; }, 2000);
+    };
+
+    // Copy all JSON
+    document.getElementById('btn-copy-all').onclick = () => {
+      navigator.clipboard.writeText(JSON.stringify(r, null, 2));
+      document.getElementById('btn-copy-all').textContent = '✓ Skopiowano JSON';
+      setTimeout(() => { document.getElementById('btn-copy-all').textContent = 'Kopiuj wszystko (JSON)'; }, 2000);
+    };
+  }
+
+  // ---- Render virals ----
+  function renderVirals(data) {
+    document.getElementById('viral-count').textContent = data.candidates.length;
+    document.getElementById('viral-saved').textContent = data.saved_count;
+
+    const list = document.getElementById('viral-items');
+    list.innerHTML = '';
+
+    data.candidates.forEach((c, i) => {
+      const score = c.score ?? 0;
+      const bars  = '▓'.repeat(Math.round(score / 20)) + '░'.repeat(5 - Math.round(score / 20));
+
+      const item = document.createElement('div');
+      item.className = 'viral-item';
+      item.innerHTML = `
+        <div class="viral-item-top">
+          <span class="vi-platform">${esc(c.platform)}</span>
+          <span class="vi-score">${bars} ${score}/100</span>
+        </div>
+        <div class="vi-title"><a href="${esc(c.source_url)}" target="_blank" rel="noopener">${esc(c.title)}</a></div>
+        <div class="vi-summary">${esc(c.summary)}</div>
+        <div class="vi-actions">
+          <button class="btn-approve" data-id="${esc(c.supabase_id || '')}" data-idx="${i}">
+            ${c.supabase_id ? '✓ ZAPISANO' : 'ZATWIERDŹ'}
+          </button>
+        </div>
+      `;
+      list.appendChild(item);
+    });
+
+    viralBox.classList.add('show');
+    viralBox.scrollIntoView({ behavior: 'smooth', block: 'start' });
+  }
+
+  function esc(str) {
+    return String(str || '').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;');
+  }
+
+})();
+</script>
+{% endblock %}
