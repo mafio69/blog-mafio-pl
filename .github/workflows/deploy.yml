@@ -4,7 +4,8 @@ on:
   push:
     branches:
       - main
-  workflow_dispatch:  # ← dodaj tę linię
+  workflow_dispatch:
+
 concurrency:
   group: deploy-production
   cancel-in-progress: false
@@ -18,13 +19,17 @@ jobs:
       - name: Checkout code
         uses: actions/checkout@v4
 
-      - name: Setup SSH agent
-        uses: webfactory/ssh-agent@v0.9.0
-        with:
-          ssh-private-key: ${{ secrets.BLOG_SSH }}
+      - name: Setup SSH key
+        run: |
+          mkdir -p ~/.ssh
+          printf '%s\n' "${{ secrets.BLOG_SSH }}" | tr -d '\r' > ~/.ssh/id_rsa
+          chmod 600 ~/.ssh/id_rsa
+          ssh-keyscan -H "${{ secrets.VPS_HOST }}" >> ~/.ssh/known_hosts 2>/dev/null
 
-      - name: Add host to known_hosts
-        run: ssh-keyscan -H ${{ secrets.VPS_HOST }} >> ~/.ssh/known_hosts 2>/dev/null
+      - name: Test SSH
+        run: |
+          ssh -i ~/.ssh/id_rsa -o StrictHostKeyChecking=no \
+            ${{ secrets.VPS_USER }}@${{ secrets.VPS_HOST }} "echo SSH OK"
 
       - name: Deploy via rsync
         run: |
@@ -49,17 +54,16 @@ jobs:
             --exclude='docs/' \
             --exclude='tests/' \
             --exclude='phpunit.dist.xml' \
-            -e "ssh -o StrictHostKeyChecking=no" \
+            -e "ssh -i ~/.ssh/id_rsa -o StrictHostKeyChecking=no" \
             ./ ${{ secrets.VPS_USER }}@${{ secrets.VPS_HOST }}:${{ secrets.VPS_DEPLOY_PATH }}
 
       - name: Post-deploy commands
         run: |
-          ssh -o StrictHostKeyChecking=no \
-            ${{ secrets.VPS_USER }}@${{ secrets.VPS_HOST }} << 'DEPLOY'
+          ssh -i ~/.ssh/id_rsa -o StrictHostKeyChecking=no \
+            ${{ secrets.VPS_USER }}@${{ secrets.VPS_HOST }} <<EOF
               set -e
-              cd ${{ secrets.VPS_DEPLOY_PATH }}
-              composer install --no-dev --optimize-autoloader --no-interaction 2>/dev/null || \
-                php composer.phar install --no-dev --optimize-autoloader --no-interaction
+              cd "${{ secrets.VPS_DEPLOY_PATH }}"
+              composer install --no-dev --optimize-autoloader --no-interaction || php composer.phar install --no-dev --optimize-autoloader --no-interaction
               php8.4 bin/console cache:clear --env=prod
               echo "Deploy completed at $(date)"
-          DEPLOY
+          EOF
