@@ -4,7 +4,7 @@ on:
   push:
     branches:
       - main
-
+     workflow_dispatch:  # ← dodaj tę linię
 concurrency:
   group: deploy-production
   cancel-in-progress: false
