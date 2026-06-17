@@ -3,6 +3,35 @@
 {% block title %}blog.mafio.pl — Tech & AI{% endblock %}
 
 {% block body %}
+    {% set sample_posts = [
+        {
+            slug: 'symfony-7-new-features',
+            title: 'Symfony 7: Nowe funkcje i zmiany',
+            summary: 'Przegląd najważniejszych nowości w Symfony 7, w tym nowe komponenty, ulepszenia wydajności i zmiany w API.',
+            published_at: '2026-06-15',
+            auto_generated: true,
+            tags: ['PHP', 'Symfony', 'Framework']
+        },
+        {
+            slug: 'docker-best-practices-2026',
+            title: 'Docker: Najlepsze praktyki w 2026',
+            summary: 'Jak optymalizować obrazy Docker, zarządzać kontenerami i używać multi-stage builds w produkcji.',
+            published_at: '2026-06-14',
+            auto_generated: true,
+            tags: ['Docker', 'DevOps', 'Containers']
+        },
+        {
+            slug: 'php-84-performance',
+            title: 'PHP 8.4: Ulepszenia wydajności',
+            summary: 'Nowe funkcje JIT, optymalizacje pamięci i inne ulepszenia wydajności w PHP 8.4.',
+            published_at: '2026-06-13',
+            auto_generated: true,
+            tags: ['PHP', 'Performance', 'Development']
+        }
+    ] %}
+
+    {% set posts = posts|length > 0 ? posts : sample_posts %}
+
     {% if posts|length > 0 %}
         {% set all_tags = [] %}
         {% for post in posts %}

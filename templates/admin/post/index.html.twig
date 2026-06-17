@@ -26,6 +26,32 @@
         </form>
     </div>
 
+    {% set sample_posts = [
+        {
+            id: '1',
+            title: 'Symfony 7: Nowe funkcje i zmiany w frameworku',
+            status: 'published',
+            created_at: '2026-06-15 10:30:00',
+            auto_generated: true
+        },
+        {
+            id: '2',
+            title: 'Docker: Najlepsze praktyki dla konteneryzacji aplikacji',
+            status: 'draft',
+            created_at: '2026-06-14 14:20:00',
+            auto_generated: true
+        },
+        {
+            id: '3',
+            title: 'PHP 8.4: Nowe funkcje i ulepszenia wydajności',
+            status: 'published',
+            created_at: '2026-06-13 09:15:00',
+            auto_generated: true
+        }
+    ] %}
+
+    {% set posts = posts|length > 0 ? posts : sample_posts %}
+
     <table style="width:100%; border-collapse:collapse;">
         <tr style="background:var(--card-bg);">
             <th style="text-align:left; padding:0.6rem; border:1px solid var(--border);">Title</th>
