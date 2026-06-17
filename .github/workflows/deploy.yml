@@ -31,8 +31,7 @@ jobs:
 
       - name: Test SSH
         run: |
-          ssh -p ${{ secrets.VPS_PORT || 10137 }} -o StrictHostKeyChecking=no \
-            ${{ secrets.VPS_USER }}@${{ secrets.VPS_HOST }} "echo SSH OK"
+          ssh -p ${{ secrets.VPS_PORT || 10137 }} -o StrictHostKeyChecking=no ${{ secrets.VPS_USER }}@${{ secrets.VPS_HOST }} "echo SSH OK"
 
       - name: Deploy via rsync
         run: |
@@ -62,8 +61,7 @@ jobs:
 
       - name: Post-deploy commands
         run: |
-          ssh -p ${{ secrets.VPS_PORT || 10137 }} -o StrictHostKeyChecking=no \
-            ${{ secrets.VPS_USER }}@${{ secrets.VPS_HOST }} <<EOF
+          ssh -p ${{ secrets.VPS_PORT || 10137 }} -o StrictHostKeyChecking=no ${{ secrets.VPS_USER }}@${{ secrets.VPS_HOST }} <<EOF
               set -e
               cd "${{ secrets.VPS_DEPLOY_PATH }}"
               composer install --no-dev --optimize-autoloader --no-interaction || php composer.phar install --no-dev --optimize-autoloader --no-interaction
