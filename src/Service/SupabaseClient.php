@@ -58,6 +58,13 @@ class SupabaseClient
         $response = $this->httpClient->request($method, $this->supabaseUrl . '/rest/v1/' . $path, $options);
 
         $content = $response->getContent(false);
+        $statusCode = $response->getStatusCode();
+
+        if ($statusCode >= 400) {
+            $errorData = $content ? json_decode($content, true) : [];
+            $message = $errorData['message'] ?? $errorData['error'] ?? "HTTP $statusCode";
+            throw new \RuntimeException("Supabase API error: $message");
+        }
 
         return $content ? json_decode($content, true) ?? [] : [];
     }
