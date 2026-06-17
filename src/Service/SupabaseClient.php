@@ -63,7 +63,8 @@ class SupabaseClient
         if ($statusCode >= 400) {
             $errorData = $content ? json_decode($content, true) : [];
             $message = $errorData['message'] ?? $errorData['error'] ?? "HTTP $statusCode";
-            throw new \RuntimeException("Supabase API error: $message");
+            error_log("Supabase API error: $message");
+            return [];
         }
 
         return $content ? json_decode($content, true) ?? [] : [];
