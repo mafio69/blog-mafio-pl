@@ -3,6 +3,7 @@
 {% block title %}blog.mafio.pl — Tech & AI{% endblock %}
 
 {% block body %}
+    {# Dynamic content disabled - using static sample data #}
     {% set sample_posts = [
         {
             slug: 'symfony-7-new-features',
@@ -30,8 +31,9 @@
         }
     ] %}
 
-    {% set posts = posts|length > 0 ? posts : sample_posts %}
+    {% set posts = sample_posts %}
 
+    {# Original dynamic content commented out:
     {% if posts|length > 0 %}
         {% set all_tags = [] %}
         {% for post in posts %}
@@ -81,6 +83,51 @@
             <p style="font-size: 0.8rem; color: var(--fg-muted); max-width: 400px; margin: 0 auto;">
                 Auto-agregowane artykuły ze świata PHP, Docker i DevOps — podsumowane przez AI.
             </p>
+        </div>
+    {% endif %}
+    #}
+
+    {% if posts|length > 0 %}
+        {% set all_tags = [] %}
+        {% for post in posts %}
+            {% if post is iterable and post.tags is defined %}
+                {% for tag in post.tags|default([]) %}
+                    {% if tag not in all_tags %}
+                        {% set all_tags = all_tags|merge([tag]) %}
+                    {% endif %}
+                {% endfor %}
+            {% endif %}
+        {% endfor %}
+
+        {% if all_tags|length > 0 %}
+            <div class="filter-bar" id="filter-bar">
+                <span class="label">filtr:</span>
+                <span class="tag active" data-tag="all" onclick="filterByTag('all')">all</span>
+                {% for tag in all_tags|sort %}
+                    <span class="tag" data-tag="{{ tag }}" onclick="filterByTag('{{ tag }}')">{{ tag }}</span>
+                {% endfor %}
+            </div>
+        {% endif %}
+
+        <div class="posts-grid" id="posts-list">
+            {% for post in posts %}
+                {% if post is iterable and post.slug is defined %}
+                    <a href="{{ path('post_show', {slug: post.slug}) }}" class="post-card" data-slug="{{ post.slug }}" data-tags="{{ post.tags|default([])|join(',') }}">
+                        <div class="post-card-date">{{ post.published_at|date('d.m.Y') }}{% if post.auto_generated %} · 🤖{% endif %}</div>
+                        <div class="post-card-title">{{ post.title }}</div>
+                        {% if post.summary %}
+                            <div class="post-card-summary">{{ post.summary|length > 180 ? post.summary[:180] ~ '…' : post.summary }}</div>
+                        {% endif %}
+                        <div class="post-card-footer">
+                            <div class="tags">
+                                {% for tag in post.tags|default([]) %}
+                                    <span class="tag">{{ tag }}</span>
+                                {% endfor %}
+                            </div>
+                        </div>
+                    </a>
+                {% endif %}
+            {% endfor %}
         </div>
     {% endif %}
 {% endblock %}

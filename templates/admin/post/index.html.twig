@@ -26,6 +26,7 @@
         </form>
     </div>
 
+    {# Dynamic content disabled - using static sample data #}
     {% set sample_posts = [
         {
             id: '1',
@@ -50,8 +51,9 @@
         }
     ] %}
 
-    {% set posts = posts|length > 0 ? posts : sample_posts %}
+    {% set posts = sample_posts %}
 
+    {# Original dynamic content commented out:
     <table style="width:100%; border-collapse:collapse;">
         <tr style="background:var(--card-bg);">
             <th style="text-align:left; padding:0.6rem; border:1px solid var(--border);">Title</th>
@@ -94,6 +96,50 @@
             </tr>
         {% else %}
             <tr><td colspan="4" style="padding:1.5rem; border:1px solid var(--border); text-align:center; color:var(--muted);">No posts yet. Add one or generate from URL above.</td></tr>
+        {% endfor %}
+    </table>
+    #}
+
+    <table style="width:100%; border-collapse:collapse;">
+        <tr style="background:var(--card-bg);">
+            <th style="text-align:left; padding:0.6rem; border:1px solid var(--border);">Title</th>
+            <th style="text-align:left; padding:0.6rem; border:1px solid var(--border); width:90px;">Status</th>
+            <th style="text-align:left; padding:0.6rem; border:1px solid var(--border); width:120px;">Created</th>
+            <th style="text-align:left; padding:0.6rem; border:1px solid var(--border); width:200px;">Actions</th>
+        </tr>
+        {% for post in posts %}
+            <tr>
+                <td style="padding:0.6rem; border:1px solid var(--border);">
+                    <strong>{{ post.title|length > 60 ? post.title[:60] ~ '…' : post.title }}</strong>
+                    {% if post.auto_generated %}<span title="AI generated" style="font-size:0.75rem;">🤖</span>{% endif %}
+                </td>
+                <td style="padding:0.6rem; border:1px solid var(--border);">
+                    <span style="padding:0.15rem 0.4rem; border-radius:3px; font-size:0.75rem; background:{{ post.status == 'published' ? '#c6f6d5' : '#fed7d7' }}; color:{{ post.status == 'published' ? '#22543d' : '#9b2c2c' }};">
+                        {{ post.status == 'published' ? '✓ PUB' : '○ DRAFT' }}
+                    </span>
+                </td>
+                <td style="padding:0.6rem; border:1px solid var(--border); font-size:0.8rem; color:var(--muted);">
+                    {{ post.created_at|date('Y-m-d H:i') }}
+                </td>
+                <td style="padding:0.6rem; border:1px solid var(--border); font-size:0.85rem;">
+                    <a href="{{ path('admin_post_edit', {id: post.id}) }}">Edit</a> |
+                    <form method="post" action="{{ path('admin_post_toggle', {id: post.id}) }}" style="display:inline;">
+                        <input type="hidden" name="_token" value="{{ csrf_token('toggle' ~ post.id) }}">
+                        <button type="submit" style="background:none; border:none; color:var(--accent); cursor:pointer; padding:0; font:inherit; text-decoration:underline;">
+                            {{ post.status == 'published' ? 'Hide' : 'Publish' }}
+                        </button>
+                    </form> |
+                    <form method="post" action="{{ path('admin_post_delete', {id: post.id}) }}" style="display:inline;" onsubmit="return confirm('Delete this post?');">
+                        <input type="hidden" name="_token" value="{{ csrf_token('delete' ~ post.id) }}">
+                        <button type="submit" style="background:none; border:none; color:#e53e3e; cursor:pointer; padding:0; font:inherit; text-decoration:underline;">Delete</button>
+                    </form> |
+                    <form method="post" action="{{ path('admin_post_regenerate_title', {id: post.id}) }}" style="display:inline;">
+                        <input type="hidden" name="_token" value="{{ csrf_token('regen' ~ post.id) }}">
+                        <button type="submit" style="background:none; border:none; color:#805ad5; cursor:pointer; padding:0; font:inherit; text-decoration:underline;" title="Regeneruj tytuł po polsku">🇵🇱 Tytuł</button>
+                    </form>
+                    </form>
+                </td>
+            </tr>
         {% endfor %}
     </table>
 {% endblock %}
