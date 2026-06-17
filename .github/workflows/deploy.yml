@@ -18,17 +18,20 @@ jobs:
     steps:
       - name: Checkout code
         uses: actions/checkout@v4
-        
+
       - name: Setup SSH key
-        run: |
-          mkdir -p ~/.ssh
-          printf '%s\n' "${{ secrets.BLOG_SSH }}" | tr -d '\r' > ~/.ssh/id_rsa
-          chmod 600 ~/.ssh/id_rsa
-          ssh-keyscan -p ${{ secrets.VPS_PORT || 22 }} -H "${{ secrets.VPS_HOST }}" >> ~/.ssh/known_hosts 2>/dev/null
+        uses: shimataro/ssh-key-action@v2
+        with:
+          key: ${{ secrets.BLOG_SSH }}
+          known_hosts: unnecessary
+          if_key_exists: fail
+
+      - name: Add known hosts
+        run: ssh-keyscan -p ${{ secrets.VPS_PORT || 10137 }} -H "${{ secrets.VPS_HOST }}" >> ~/.ssh/known_hosts
 
       - name: Test SSH
         run: |
-          ssh -i ~/.ssh/id_rsa -p ${{ secrets.VPS_PORT || 22 }} -o StrictHostKeyChecking=no \
+          ssh -p ${{ secrets.VPS_PORT || 10137 }} -o StrictHostKeyChecking=no \
             ${{ secrets.VPS_USER }}@${{ secrets.VPS_HOST }} "echo SSH OK"
 
       - name: Deploy via rsync
@@ -54,12 +57,12 @@ jobs:
             --exclude='docs/' \
             --exclude='tests/' \
             --exclude='phpunit.dist.xml' \
-            -e "ssh -i ~/.ssh/id_rsa -o StrictHostKeyChecking=no" \
+            -e "ssh -p ${{ secrets.VPS_PORT || 10137 }} -o StrictHostKeyChecking=no" \
             ./ ${{ secrets.VPS_USER }}@${{ secrets.VPS_HOST }}:${{ secrets.VPS_DEPLOY_PATH }}
 
       - name: Post-deploy commands
         run: |
-          ssh -i ~/.ssh/id_rsa -o StrictHostKeyChecking=no \
+          ssh -p ${{ secrets.VPS_PORT || 10137 }} -o StrictHostKeyChecking=no \
             ${{ secrets.VPS_USER }}@${{ secrets.VPS_HOST }} <<EOF
               set -e
               cd "${{ secrets.VPS_DEPLOY_PATH }}"
