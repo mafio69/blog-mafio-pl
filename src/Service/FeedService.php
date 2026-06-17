@@ -18,7 +18,7 @@ class FeedService
     public function findAll(): array
     {
         return $this->supabase->select('feeds', [
-            'order' => 'created_at.desc',
+            'order' => 'last_fetched_at.desc.nullslast',
         ]);
     }
 
