@@ -55,7 +55,8 @@ class AdminFeedController extends AbstractController
     {
         $feed = $feedService->findOneById($id);
         if (!$feed) {
-            throw $this->createNotFoundException('Feed not found.');
+            $this->addFlash('error', 'Feed not found. This may be sample data - add real feeds via "Add New Source".');
+            return $this->redirectToRoute('admin_feed_index');
         }
 
         if ($request->isMethod('POST')) {
