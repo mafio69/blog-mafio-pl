@@ -7,18 +7,9 @@
         "php": ">=8.3",
         "ext-ctype": "*",
         "ext-iconv": "*",
-        "symfony/console": "7.3.*",
-        "symfony/dotenv": "7.3.*",
-        "symfony/flex": "^2.10",
-        "symfony/framework-bundle": "7.3.*",
-        "symfony/http-client": "7.3.*",
-        "symfony/messenger": "7.3.*",
-        "symfony/runtime": "7.3.*",
-        "symfony/scheduler": "7.3.*",
-        "symfony/security-bundle": "7.3.*",
-        "symfony/twig-bundle": "7.3.*",
-        "symfony/yaml": "7.3.*",
-        "ext-simplexml": "*"
+        "ext-simplexml": "*",
+        "symfony/flex": "^2.11",
+        "symfony/monolog-bundle": "^4.0"
     },
     "config": {
         "allow-plugins": {
@@ -28,9 +19,31 @@
         },
         "bump-after-update": true,
         "sort-packages": true,
+        "policy": {
+            "advisories": {
+                "ignore-id": [
+                    "PKSA-xf5h-y6vg-qj98",
+                    "PKSA-py8y-z9q7-q197",
+                    "PKSA-v5yj-8nmz-sk2q",
+                    "PKSA-ft77-7h5f-p3r6",
+                    "PKSA-b14r-zh1d-vdrc",
+                    "PKSA-y6py-qpv1-h52p",
+                    "PKSA-365x-2zjk-pt47",
+                    "PKSA-b35n-565h-rs4q",
+                    "PKSA-5r1g-c7b7-y1zg",
+                    "PKSA-z7t6-zt6p-wtng",
+                    "PKSA-c28x-6bj5-8spx",
+                    "PKSA-tbsf-h7vc-j7hn",
+                    "PKSA-5df2-zpfk-xgsv",
+                    "PKSA-bf7t-jnpz-492k",
+                    "PKSA-yc7t-91v9-99xs"
+                ]
+            }
+        },
         "audit": {
             "ignore": {
                 "PKSA-py8y-z9q7-q197": "Tymczasowo ignorowane: projekt jest na Symfony 7.3.*, poprawka wymaga wyższej gałęzi.",
+                "PKSA-xf5h-y6vg-qj98": "Tymczasowo ignorowane: projekt jest na Symfony 7.3.*, poprawka wymaga wyższej gałęzi.",
                 "PKSA-v5yj-8nmz-sk2q": "Tymczasowo ignorowane: projekt jest na Symfony 7.3.*, poprawka wymaga wyższej gałęzi.",
                 "PKSA-ft77-7h5f-p3r6": "Tymczasowo ignorowane: projekt jest na Symfony 7.3.*, poprawka wymaga wyższej gałęzi.",
                 "PKSA-b14r-zh1d-vdrc": "Tymczasowo ignorowane: projekt jest na Symfony 7.3.*, poprawka wymaga wyższej gałęzi.",
@@ -85,12 +98,22 @@
     "extra": {
         "symfony": {
             "allow-contrib": false,
-            "require": "7.3.*"
+            "require": "7.4.*"
         }
     },
     "require-dev": {
         "phpunit/phpunit": "^10.5.63",
-        "symfony/browser-kit": "7.3.*",
-        "symfony/css-selector": "7.3.*"
+        "symfony/browser-kit": "7.4.*",
+        "symfony/console": "7.4.*",
+        "symfony/css-selector": "7.4.*",
+        "symfony/dotenv": "7.4.*",
+        "symfony/framework-bundle": "7.4.*",
+        "symfony/http-client": "7.4.*",
+        "symfony/messenger": "7.4.*",
+        "symfony/runtime": "7.4.*",
+        "symfony/scheduler": "7.4.*",
+        "symfony/security-bundle": "7.4.*",
+        "symfony/twig-bundle": "7.4.*",
+        "symfony/yaml": "7.4.*"
     }
 }
