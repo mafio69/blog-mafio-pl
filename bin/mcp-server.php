@@ -15,9 +15,9 @@ use PhpMcp\Server\Server;
 use PhpMcp\Server\Tool;
 use PhpMcp\Server\Http\StreamableHttpTransport;
 
-// Konfiguracja z .env
+// Konfiguracja z .env / .env.local
 $dotenv = new Symfony\Component\Dotenv\Dotenv();
-$dotenv->load(__DIR__ . '/../.env');
+$dotenv->bootEnv(__DIR__ . '/../.env');
 
 $supabaseUrl = $_ENV['SUPABASE_URL'] ?? '';
 $supabaseKey = $_ENV['SUPABASE_SERVICE_ROLE_KEY'] ?? '';
