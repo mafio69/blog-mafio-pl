@@ -7,16 +7,16 @@ blog.mafio.pl — auto-agregujący blog techniczny (Symfony 8, Supabase, VPS OVH
 ## Deploy
 
 ```bash
-sshpass -p '<PASSWORD>' ssh ubuntu@57.128.241.168
-# App path: /home/ubuntu/app
+ssh <VPS_USER>@<VPS_HOST> -p <VPS_PORT>
+# App path: see GitHub Secrets (VPS_DEPLOY_PATH)
 # Cache clear: php8.4 bin/console cache:clear --env=prod
 ```
 
 ## Supabase
 
-- Dashboard: https://supabase.com/dashboard/project/pqunceuggtrqrerybult
-- REST API: https://pqunceuggtrqrerybult.supabase.co/rest/v1/
-- Management API: https://api.supabase.com/v1/projects/pqunceuggtrqrerybult/
+- Dashboard: https://supabase.com/dashboard/project/<SUPABASE_REF>
+- REST API: https://<SUPABASE_REF>.supabase.co/rest/v1/
+- Management API: https://api.supabase.com/v1/projects/<SUPABASE_REF>/
 
 ## Konwencje
 

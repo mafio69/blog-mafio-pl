@@ -79,12 +79,12 @@ public/                   # Web root
 
 | Zasób | Wartość |
 |-------|---------|
-| VPS | OVH vps-6f882619, Ubuntu 24.04 |
-| IP | 57.128.241.168 |
-| Domeny | blog.mafio.pl, lab.mafio.pl, mafio.pl |
-| PHP | 8.4.21 (cli + fpm) |
+| VPS | OVH, Ubuntu 24.04 |
+| IP | see GitHub Secrets (VPS_HOST) |
+| Domeny | blog.mafio.pl |
+| PHP | 8.4 (cli + fpm) |
 | Nginx | reverse proxy, SSL termination |
-| Supabase | ref: pqunceuggtrqrerybult |
+| Supabase | see .env.local (SUPABASE_URL) |
 | Git | github.com/mafio69/blog-mafio-pl |
 
 ## Zmienne środowiskowe (.env.local)

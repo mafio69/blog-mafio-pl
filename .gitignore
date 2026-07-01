@@ -24,6 +24,8 @@ var/
 .env
 .env.local
 .env.*
+!.env.example
+!.env.test
 
 # Editors
 .vscode/
