@@ -1,0 +1,29 @@
+{% extends 'base.html.twig' %}
+
+{% block title %}{{ article.title }} — blog.mafio.pl{% endblock %}
+
+{% block body %}
+    <h1>{{ article.title }}</h1>
+    
+    {% if article.created_at is defined %}
+        <div class="post-card-date">{{ article.created_at|date('d.m.Y') }}</div>
+    {% endif %}
+    
+    {% if article.tags is defined and article.tags and article.tags|length > 0 %}
+        <div class="tags" style="margin: 1rem 0;">
+            {% for tag in article.tags %}
+                <span class="tag">{{ tag }}</span>
+            {% endfor %}
+        </div>
+    {% endif %}
+    
+    {% if article.content is defined %}
+        <div class="article-content">
+            {{ article.content|raw }}
+        </div>
+    {% endif %}
+    
+    <p style="margin-top: 2rem; text-align: center;">
+        <a href="{{ path('newsletter_index') }}">← Powrót do newslettera</a>
+    </p>
+{% endblock %}

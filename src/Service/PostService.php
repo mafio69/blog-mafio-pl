@@ -13,6 +13,11 @@ class PostService
         private SummarizerService $summarizer,
     ) {}
 
+    public function getSupabaseClient(): SupabaseClient
+    {
+        return $this->supabase;
+    }
+
     public function findAll(int $limit = 100, int $offset = 0): array
     {
         return $this->supabase->select('posts', [

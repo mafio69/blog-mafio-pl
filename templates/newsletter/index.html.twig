@@ -1,0 +1,38 @@
+{% extends 'base.html.twig' %}
+
+{% block title %}Newsletter — blog.mafio.pl{% endblock %}
+
+{% block body %}
+    <h1>📰 Newsletter</h1>
+    
+    {% if articles|length > 0 %}
+        <div class="posts-grid" id="posts-list">
+            {% for article in articles %}
+                {% if article is iterable and article.id is defined %}
+                    <a href="{{ path('newsletter_article_show', {id: article.id}) }}" class="post-card">
+                        <div class="post-card-date">{{ article.created_at|date('d.m.Y') }}</div>
+                        <div class="post-card-title">{{ article.title }}</div>
+                        {% if article.summary %}
+                            <div class="post-card-summary">{{ article.summary|length > 180 ? article.summary[:180] ~ '…' : article.summary }}</div>
+                        {% endif %}
+                        <div class="post-card-footer">
+                            <div class="tags">
+                                {% for tag in article.tags|default([]) %}
+                                    <span class="tag">{{ tag }}</span>
+                                {% endfor %}
+                            </div>
+                        </div>
+                    </a>
+                {% endif %}
+            {% endfor %}
+        </div>
+    {% else %}
+        <div style="text-align: center; padding: 6rem 0;">
+            <p style="font-size: 1.2rem; margin-bottom: 0.5rem; text-shadow: 0 0 12px #33ff3360;">_</p>
+            <h2 style="font-size: 1.4rem; font-weight: 800; margin-bottom: 1rem;">Brak artykułów</h2>
+            <p style="font-size: 0.8rem; color: var(--fg-muted); max-width: 400px; margin: 0 auto;">
+                Brak artykułów w newsletterze.
+            </p>
+        </div>
+    {% endif %}
+{% endblock %}
