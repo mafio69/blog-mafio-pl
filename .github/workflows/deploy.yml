@@ -38,6 +38,7 @@ jobs:
           rsync -azP --delete \
             --exclude='.git' \
             --exclude='.github' \
+            --exclude='.env' \
             --exclude='.env.local' \
             --exclude='.env.local.php' \
             --exclude='.env.dev' \
