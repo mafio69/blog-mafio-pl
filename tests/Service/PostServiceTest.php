@@ -53,7 +53,7 @@ class PostServiceTest extends TestCase
             ->with('posts', $this->callback(fn($data) => $data['slug'] === 'hello-world'))
             ->willReturn(['id' => '1', 'title' => 'Hello World', 'slug' => 'hello-world']);
 
-        $this->createService($supabase)->create(['title' => 'Hello World']);
+        $this->createService($supabase)->create(['title' => 'Hello World', 'content' => 'Lorem ipsum dolor sit amet.']);
     }
 
     public function testUpdate(): void
