@@ -1,6 +1,6 @@
 # blog.mafio.pl
 
-Auto-aggregating tech blog built with Symfony 8 and Supabase.
+Auto-aggregating tech blog built with Symfony 7 and Supabase.
 
 ## Overview
 
@@ -14,11 +14,11 @@ Auto-aggregating tech blog built with Symfony 8 and Supabase.
 
 | Layer | Technology |
 |-------|-----------|
-| Backend | PHP 8.4, Symfony 8.0 |
+| Backend | PHP 8.4 (prod), Symfony 7.4 |
 | Database | Supabase (PostgreSQL 17) |
 | Frontend | Server-side rendered (Twig), minimal CSS |
 | Auth | Session-based, single admin user |
-| Deploy | VPS (nginx + PHP-FPM), Let's Encrypt SSL |
+| Deploy | GitHub Actions → rsync over SSH to VPS |
 
 ## Requirements
 
@@ -41,7 +41,7 @@ composer install
 Copy the example environment file and configure your settings:
 
 ```bash
-cp .env .env.local
+cp .env.example .env.local
 ```
 
 Required variables (update in `.env.local`):
@@ -49,7 +49,8 @@ Required variables (update in `.env.local`):
 - `SUPABASE_ANON_KEY`
 - `SUPABASE_SERVICE_ROLE_KEY`
 - `APP_SECRET`
-- `GEMINI_API_KEY` (TODO: Verify if this is the correct key name)
+- `GOOGLE_API_KEY` and `GEMINI_MODEL` (Gemini)
+- `PERPLEXITY_API_KEY` (second AI provider, used alongside Gemini)
 
 ### Run Server
 
@@ -59,6 +60,12 @@ symfony serve
 
 # Or using PHP built-in server
 php -S localhost:8000 -t public
+```
+
+Alternatively, use Docker (Caddy + PHP-FPM, see `docker-compose.yml` / `docker/`):
+
+```bash
+docker compose up -d
 ```
 
 ## Scripts & Commands
@@ -72,7 +79,18 @@ php bin/console cache:clear
 
 # List routes
 php bin/console debug:router
+
+# Fetch RSS feeds into the aggregator
+php bin/console app:fetch-feeds
+
+# Generate an AI summary for a given article URL
+php bin/console app:summarize-url <url>
 ```
+
+### CI / code quality
+
+GitHub Actions runs [Qodana](https://www.jetbrains.com/qodana/) static analysis on every push
+(`.github/workflows/qodana_code_quality.yml`, config in `qodana.yaml`).
 
 ### Testing
 
@@ -88,23 +106,22 @@ php vendor/bin/phpunit
 src/
 ├── Controller/         # Controllers (routing)
 ├── Service/            # Business logic
+├── Command/            # Console commands (app:fetch-feeds, app:summarize-url)
 └── Kernel.php
 templates/              # Twig templates
 config/                 # Symfony configuration
 tests/                  # PHPUnit tests
 docs/                   # Project documentation
 public/                 # Web root (index.php)
+docker/                 # Local dev Docker setup (PHP-FPM + Caddy)
 ```
 
 ## Deployment
 
-The app runs on a VPS with nginx + PHP 8.4-FPM.
-
-```bash
-# Deploy by syncing files and clearing cache
-scp -r src/ config/ templates/ public/ composer.* user@server:~/app/
-ssh user@server "cd ~/app && php8.4 bin/console cache:clear --env=prod"
-```
+Deployment is automated via GitHub Actions (`.github/workflows/deploy.yml`): every push to
+`main` syncs the repo to the VPS over SSH (`rsync`) and runs `composer install --no-dev` +
+`cache:clear` remotely. There is no manual `scp` step and no nginx config in this repo — the
+VPS runs PHP 8.4-FPM behind whatever web server is configured there directly (not tracked here).
 
 ## License
 
