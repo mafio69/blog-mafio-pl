@@ -46,9 +46,11 @@ htmlcov/
 .mypy_cache/
 .pytest_cache/
 .gradle/
+/.phpunit.cache/
 
 # Docker
-docker/
+# UWAGA: nie ignorujemy calego docker/ — Dockerfile i Caddyfile musza byc w repo,
+# inaczej swiezy klon/CI nie zbuduje appki ani e2e. Ignorujemy tylko dane runtime.
 db_data/
 /.commandcode/
 /.ai/
