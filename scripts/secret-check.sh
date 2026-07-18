@@ -10,6 +10,9 @@ SECRETS_PATTERNS=(
     "gho_"
     "glpat-"
     "xox[baprs]-"
+    "PASSWORD=[^t]"
+    "_PASSWORD=[^t]"
+    "PASSWD="
 )
 
 ALLOWED_PLACEHOLDERS=(
@@ -30,6 +33,11 @@ fi
 ERRORS=""
 
 for file in $STAGED_FILES; do
+    # Pomiń plik z definicjami patternów
+    if [[ "$file" == *"secret-check.sh"* ]]; then
+        continue
+    fi
+
     # Pomiń pliki binarne
     if ! file "$file" | grep -q "text"; then
         continue
@@ -39,25 +47,25 @@ for file in $STAGED_FILES; do
     CONTENT=$(git show :"$file" 2>/dev/null)
 
     for pattern in "${SECRETS_PATTERNS[@]}"; do
-        if echo "$CONTENT" | grep -q "$pattern"; then
-            # Sprawdź czy to nie placeholder
-            IS_PLACEHOLDER=false
-            for allowed in "${ALLOWED_PLACEHOLDERS[@]}"; do
-                if echo "$CONTENT" | grep -q "$allowed"; then
-                    IS_PLACEHOLDER=true
+        MATCHING_LINES=$(echo "$CONTENT" | grep -n "$pattern" | grep -v "^#" | grep -v "//" | head -3)
+        
+        if [ -n "$MATCHING_LINES" ]; then
+            # Sprawdź czy matching lines zawierają placeholder
+            for line in $MATCHING_LINES; do
+                IS_PLACEHOLDER=false
+                for allowed in "${ALLOWED_PLACEHOLDERS[@]}"; do
+                    if echo "$line" | grep -q "$allowed"; then
+                        IS_PLACEHOLDER=true
+                        break
+                    fi
+                done
+
+                if [ "$IS_PLACEHOLDER" = false ]; then
+                    ERRORS="$ERRORS\n⚠️  Potencjalny sekret w pliku: $file (pattern: $pattern)"
+                    ERRORS="$ERRORS\n   Linia: $line"
                     break
                 fi
             done
-
-            if [ "$IS_PLACEHOLDER" = false ]; then
-                # Dodatkowa weryfikacja - sprawdź czy to faktycznie sekret
-                # (nie tylko wzmianka w komentarzu)
-                MATCHING_LINES=$(echo "$CONTENT" | grep -n "$pattern" | grep -v "^#" | grep -v "//" | head -3)
-                if [ -n "$MATCHING_LINES" ]; then
-                    ERRORS="$ERRORS\n⚠️  Potencjalny sekret w pliku: $file (pattern: $pattern)"
-                    ERRORS="$ERRORS\n   Linia: $(echo "$MATCHING_LINES" | head -1)"
-                fi
-            fi
         fi
     done
 done
