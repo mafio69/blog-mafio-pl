@@ -100,6 +100,43 @@ Run the test suite with PHPUnit:
 php vendor/bin/phpunit
 ```
 
+### End-to-End Tests (Playwright)
+
+```bash
+cd e2e
+npm install
+npx playwright install
+npm run e2e
+```
+
+### Security / Pre-commit Hook
+
+The project includes a pre-commit hook that prevents accidental commits of secrets (API keys, passwords, tokens).
+
+**Installation:**
+
+```bash
+composer install-hooks
+```
+
+This copies `scripts/secret-check.sh` to `.git/hooks/pre-commit`.
+
+**What it detects:**
+
+- Supabase keys (`sb_secret_`)
+- JWT tokens (`eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9`)
+- Perplexity API keys (`pplx-`)
+- OpenAI keys (`sk-proj-`)
+- GitHub/GitLab tokens (`ghp_`, `gho_`, `glpat-`)
+- Slack tokens (`xox[baprs]-`)
+- Passwords with real values (ignores placeholders like `test-`, `your_`, `changeme`)
+
+**Bypass (if false positive):**
+
+```bash
+git commit --no-verify
+```
+
 ## Project Structure
 
 ```

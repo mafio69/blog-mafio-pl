@@ -38,6 +38,11 @@ for file in $STAGED_FILES; do
         continue
     fi
 
+    # Pomiń dokumentację (może zawierać przykłady wzorców)
+    if [[ "$file" == "README.md" || "$file" == *.md ]]; then
+        continue
+    fi
+
     # Pomiń pliki binarne
     if ! file "$file" | grep -q "text"; then
         continue
