@@ -102,6 +102,10 @@
         ],
         "post-update-cmd": [
             "@auto-scripts"
+        ],
+        "install-hooks": [
+            "cp scripts/secret-check.sh .git/hooks/pre-commit",
+            "chmod +x .git/hooks/pre-commit"
         ]
     },
     "conflict": {
