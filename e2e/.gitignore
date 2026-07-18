@@ -1,0 +1,5 @@
+/node_modules/
+/.pw-output/
+/.auth/
+/test-results/
+/playwright-report/

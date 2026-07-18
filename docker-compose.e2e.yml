@@ -1,0 +1,31 @@
+# Instancja blog TYLKO do e2e: APP_ENV=test (testowy admin z config/packages/test/security.yaml).
+# /login i /admin nie dotykaja bazy ani Supabase, wiec baza NIE jest potrzebna — atrapy env sa
+# tylko po to, zeby kontener wstal. Uruchamiana z e2e/run.sh (projekt: blog-e2e).
+# Serwisy nazwane php/caddy, bo Caddyfile ma "php_fastcgi php:9000".
+services:
+  php:
+    build:
+      context: .
+      dockerfile: docker/php/Dockerfile
+    environment:
+      - APP_ENV=test
+      - APP_SECRET=e2e-test-secret
+      - DATABASE_URL=postgresql://app:e2e@127.0.0.1:5432/app_test?serverVersion=16&charset=utf8
+      - SUPABASE_URL=https://test.supabase.co
+      - SUPABASE_ANON_KEY=test
+      - SUPABASE_SERVICE_ROLE_KEY=test
+    volumes:
+      - ./:/app
+
+  caddy:
+    image: caddy:2-alpine
+    depends_on:
+      - php
+    volumes:
+      - ./public:/app/public
+      - ./docker/caddy/Caddyfile:/etc/caddy/Caddyfile
+    healthcheck:
+      test: ["CMD", "wget", "-q", "-O", "/dev/null", "http://localhost/login"]
+      interval: 3s
+      timeout: 3s
+      retries: 30

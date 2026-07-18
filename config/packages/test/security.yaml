@@ -1,0 +1,13 @@
+# TYLKO srodowisko test: nadpisuje in-memory admina ZNANYM haslem-atrapa, zeby e2e moglo sie
+# zalogowac bez uzywania prawdziwego hasla. Glowny config/packages/security.yaml (hash bcrypt)
+# zostaje nietkniety w dev/prod.
+security:
+    password_hashers:
+        Symfony\Component\Security\Core\User\PasswordAuthenticatedUserInterface: plaintext
+    providers:
+        users_in_memory:
+            memory:
+                users:
+                    admin:
+                        password: 'e2e-test-pass'
+                        roles: ['ROLE_ADMIN']
