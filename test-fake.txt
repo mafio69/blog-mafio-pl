@@ -1,3 +1,0 @@
-POSTGRES_PASSWORD=test-password
-JWT_TOKEN=your_jwt_token_here
-API_KEY=changeme
