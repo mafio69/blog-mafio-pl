@@ -26,9 +26,6 @@ jobs:
           known_hosts: unnecessary
           if_key_exists: fail
 
-      - name: Add known hosts
-        run: ssh-keyscan -p ${{ secrets.VPS_PORT || 10137 }} -H "${{ secrets.VPS_HOST }}" >> ~/.ssh/known_hosts
-
       - name: Test SSH
         run: |
           ssh -p ${{ secrets.VPS_PORT || 10137 }} -o StrictHostKeyChecking=no ${{ secrets.VPS_USER }}@${{ secrets.VPS_HOST }} "echo SSH OK"
